@@ -105,8 +105,6 @@ namespace SrumData
 
             Api.MoveBeforeFirst(session, networkUsageTable);
             
-           
-
             while (Api.TryMoveNext(session, networkUsageTable))
             {
                 var id = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AutoIncId"));
@@ -119,6 +117,97 @@ namespace SrumData
                 var pId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileId"));
                 var dt = Api.RetrieveColumnAsDateTime(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "TimeStamp"));
 
+                var app = IdMap[appId.Value];
+                var user = IdMap[userId.Value];
+
+                var nu = new NetworkUsage(id.Value,dt.Value,app,user,br.Value,bs.Value,iL.Value,pf.Value,pId.Value);
+                
+                NetworkUsages.Add(nu.Id, nu);
+            }
+
+            Api.JetResetTableSequential(session, networkUsageTable
+                , ResetTableSequentialGrbit.None);
+        }
+        
+        /// <summary>
+        /// {D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+         private void GetApplicationResourceUsage(Session session, JET_DBID dbid)
+        {
+            using var appResourceUsage
+                = new Table(session, dbid, "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, appResourceUsage
+, SetTableSequentialGrbit.None);
+
+            Api.MoveBeforeFirst(session, appResourceUsage
+          
+
+);
+
+            // TABLE: {D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}
+            //X AppId: Long
+            //X AutoIncId: Long
+            
+            // BackgroundBytesRead: LongLong
+            // BackgroundBytesWritten: LongLong
+            // BackgroundCycleTime: LongLong
+            // FaceTime: LongLong
+            // ForegroundBytesRead: LongLong
+            // ForegroundBytesWritten: LongLong
+            // ForegroundCycleTime: LongLong
+            
+            // BackgroundContextSwitches: Long
+            // BackgroundNumberOfFlushes: Long
+            // BackgroundNumReadOperations: Long
+            // BackgroundNumWriteOperations: Long
+            // ForegroundContextSwitches: Long
+            // ForegroundNumberOfFlushes: Long
+            // ForegroundNumReadOperations: Long
+            // ForegroundNumWriteOperations: Long
+            
+            //X TimeStamp: DateTime
+            //X UserId: Long
+          
+
+            while (Api.TryMoveNext(session, appResourceUsage
+))
+            {
+                var id = Api.RetrieveColumnAsInt32(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "AutoIncId"));
+                
+                var appId = Api.RetrieveColumnAsInt32(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "AppId"));
+                
+                var userId = Api.RetrieveColumnAsInt32(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "UserId"));
+                
+                var dt = Api.RetrieveColumnAsDateTime(session, appResourceUsage
+                    , Api.GetTableColumnid(session, appResourceUsage
+                        , "TimeStamp"));
+                
+                var br = Api.RetrieveColumnAsInt64(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "BytesRecvd"));
+                var bs = Api.RetrieveColumnAsInt64(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "BytesSent"));
+                var iL = Api.RetrieveColumnAsInt64(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "InterfaceLuid"));
+                var pf = Api.RetrieveColumnAsInt32(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "L2ProfileFlags"));
+                var pId = Api.RetrieveColumnAsInt32(session, appResourceUsage
+, Api.GetTableColumnid(session, appResourceUsage
+, "L2ProfileId"));
+
+
                 var outVal = string.Empty;
 
 
@@ -130,7 +219,8 @@ namespace SrumData
                 NetworkUsages.Add(nu.Id, nu);
             }
 
-            Api.JetResetTableSequential(session, networkUsageTable
+            Api.JetResetTableSequential(session, appResourceUsage
+
                 , ResetTableSequentialGrbit.None);
         }
         
@@ -596,14 +686,16 @@ namespace SrumData
 
             BuildIdMap(session, dbid);
             GetNetworkUsageInfo(session, dbid);
+            GetApplicationResourceUsage(session, dbid);
             
+            // 708  TABLE: {DD6636C4-8929-4683-974E-22C046A43763} Network Connections
             
             // 1  TABLE: {5C8CF1C7-7257-4F13-B223-970EF5939312} unknown
             // 302  TABLE: {7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F} unknown
 
             // 478  TABLE: {D10CA2FE-6FCF-4F6D-848E-B2E99266FA86} Push Notification Data
-            // 557  TABLE: {D10CA2FE-6FCF-4F6D-848E-B2E99266FA89} Application Resource Usage
-            // 708  TABLE: {DD6636C4-8929-4683-974E-22C046A43763} Network Connections
+         
+            
             // 799  TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37} Energy Usage
             // 902  TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT Energy Usage LT
          
@@ -632,6 +724,21 @@ namespace SrumData
             //
             //
             // }
+            
+            // foreach (string table in Api.GetTableNames(session, dbid))
+            // {
+            //     Console.WriteLine($"TABLE: {table}");
+            //
+            //     foreach (ColumnInfo column in Api.GetTableColumns(session, dbid, table))
+            //     {
+            //         Console.WriteLine("\t{0}: {1}", column.Name,column.Coltyp);
+            //         
+            //        
+            //     }
+            //     Console.WriteLine("------------------------------------");
+            // }
+            //
+            //
         }
 
        
