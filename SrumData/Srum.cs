@@ -59,16 +59,16 @@ namespace SrumData
 
     public record NetworkUsage
     {
-        public int Id;
-        public DateTimeOffset Timestamp;
         public IdMapInfo AppIdMapInfo;
-        public IdMapInfo UserIdMapInfo;
         public long BytesReceived;
         public long BytesSent;
+        public int Id;
         public long InterfaceLuid;
         public InterfaceType InterfaceType;
         public int L2ProfileFlags;
         public int L2ProfileId;
+        public DateTimeOffset Timestamp;
+        public IdMapInfo UserIdMapInfo;
 
         public NetworkUsage(int id, DateTime timestamp, IdMapInfo appId, IdMapInfo userId, long bytesReceived, long bytesSent,
             long interfaceLuid, int l2ProfileFlags, int l2ProfileId)
@@ -85,306 +85,243 @@ namespace SrumData
             L2ProfileId = l2ProfileId;
             InterfaceType = Srum.GetInterfaceTypeFromLuid(interfaceLuid);
         }
-
     }
     
-      public enum InterfaceType
-        {
-            IF_TYPE_CES=133,
-IF_TYPE_COFFEE=132,
-IF_TYPE_TUNNEL=131,
-IF_TYPE_A12MPPSWITCH=130,
-IF_TYPE_L3_IPXVLAN=137,
-IF_TYPE_L3_IPVLAN=136,
-IF_TYPE_L2_VLAN=135,
-IF_TYPE_ATM_SUBINTERFACE=134,
-IF_TYPE_MEDIAMAILOVERIP=139,
-IF_TYPE_DIGITALPOWERLINE=138,
-IF_TYPE_SOFTWARE_LOOPBACK=24,
-IF_TYPE_EON=25,
-IF_TYPE_ETHERNET_3MBIT=26,
-IF_TYPE_NSIP=27,
-IF_TYPE_BASIC_ISDN=20,
-IF_TYPE_PRIMARY_ISDN=21,
-IF_TYPE_PROP_POINT2POINT_SERIAL=22,
-IF_TYPE_PPP=23,
-IF_TYPE_SLIP=28,
-IF_TYPE_ULTRA=29,
-IF_TYPE_DDN_X25=4,
-IF_TYPE_ISO88024_TOKENBUS=8,
-IF_TYPE_LAP_F=119,
-IF_TYPE_V37=120,
-IF_TYPE_X25_MLP=121,
-IF_TYPE_X25_HUNTGROUP=122,
-IF_TYPE_TRANSPHDLC=123,
-IF_TYPE_INTERLEAVE=124,
-IF_TYPE_FAST=125,
-IF_TYPE_IP=126,
-IF_TYPE_DOCSCABLE_MACLAYER=127,
-IF_TYPE_DOCSCABLE_DOWNSTREAM=128,
-IF_TYPE_DOCSCABLE_UPSTREAM=129,
-IF_TYPE_HDLC=118,
-IF_TYPE_AFLANE_8023=59,
-IF_TYPE_FRAMERELAY_INTERCONNECT=58,
-IF_TYPE_IEEE80212=55,
-IF_TYPE_PROP_MULTIPLEXOR=54,
-IF_TYPE_HIPPIINTERFACE=57,
-IF_TYPE_FIBRECHANNEL=56,
-IF_TYPE_SONET_VT=51,
-IF_TYPE_SONET_PATH=50,
-IF_TYPE_PROP_VIRTUAL=53,
-IF_TYPE_SMDS_ICIP=52,
-IF_TYPE_ISO88025_FIBER=115,
-IF_TYPE_IPOVER_ATM=114,
-IF_TYPE_ARAP=88,
-IF_TYPE_PROP_CNLS=89,
-IF_TYPE_STACKTOSTACK=111,
-IF_TYPE_IPOVER_CLAW=110,
-IF_TYPE_MPC=113,
-IF_TYPE_VIRTUALIPADDRESS=112,
-IF_TYPE_DS0_BUNDLE=82,
-IF_TYPE_BSC=83,
-IF_TYPE_ATM_LOGICAL=80,
-IF_TYPE_DS0=81,
-IF_TYPE_ISO88025R_DTR=86,
-IF_TYPE_EPLRS=87,
-IF_TYPE_ASYNC=84,
-IF_TYPE_CNR=85,
-IF_TYPE_HDH_1822=3,
-IF_TYPE_IS088023_CSMACD=7,
-IF_TYPE_PPPMULTILINKBUNDLE=108,
-IF_TYPE_IPOVER_CDLC=109,
-IF_TYPE_VOICE_FXS=102,
-IF_TYPE_VOICE_ENCAP=103,
-IF_TYPE_VOICE_EM=100,
-IF_TYPE_VOICE_FXO=101,
-IF_TYPE_ATM_FUNI=106,
-IF_TYPE_ATM_IMA=107,
-IF_TYPE_VOICE_OVERIP=104,
-IF_TYPE_ATM_DXI=105,
-IF_TYPE_SONET=39,
-IF_TYPE_MIO_X25=38,
-IF_TYPE_RS232=33,
-IF_TYPE_FRAMERELAY=32,
-IF_TYPE_SIP=31,
-IF_TYPE_DS3=30,
-IF_TYPE_ATM=37,
-IF_TYPE_ARCNET_PLUS=36,
-IF_TYPE_ARCNET=35,
-IF_TYPE_PARA=34,
-IF_TYPE_AFLANE_8025=60,
-IF_TYPE_CCTEMUL=61,
-IF_TYPE_FASTETHER=62,
-IF_TYPE_ISDN=63,
-IF_TYPE_V11=64,
-IF_TYPE_V36=65,
-IF_TYPE_G703_64K=66,
-IF_TYPE_G703_2MB=67,
-IF_TYPE_QLLC=68,
-IF_TYPE_FASTETHER_FX=69,
-IF_TYPE_REGULAR_1822=2,
-IF_TYPE_ETHERNET_CSMACD=6,
-IF_TYPE_MYRINET=99,
-IF_TYPE_ISO88025_CRFPRINT=98,
-IF_TYPE_TERMPAD=91,
-IF_TYPE_HOSTPAD=90,
-IF_TYPE_X213=93,
-IF_TYPE_FRAMERELAY_MPI=92,
-IF_TYPE_RADSL=95,
-IF_TYPE_ADSL=94,
-IF_TYPE_VDSL=97,
-IF_TYPE_SDSL=96,
-IF_TYPE_STARLAN=11,
-IF_TYPE_ISO88026_MAN=10,
-IF_TYPE_PROTEON_80MBIT=13,
-IF_TYPE_PROTEON_10MBIT=12,
-IF_TYPE_FDDI=15,
-IF_TYPE_HYPERCHANNEL=14,
-IF_TYPE_SDLC=17,
-IF_TYPE_LAP_B=16,
-IF_TYPE_E1=19,
-IF_TYPE_DS1=18,
-IF_TYPE_GIGABITETHERNET=117,
-IF_TYPE_TDLC=116,
-IF_TYPE_MODEM=48,
-IF_TYPE_AAL5=49,
-IF_TYPE_HSSI=46,
-IF_TYPE_HIPPI=47,
-IF_TYPE_FRAMERELAY_SERVICE=44,
-IF_TYPE_V35=45,
-IF_TYPE_LOCALTALK=42,
-IF_TYPE_SMDS_DXI=43,
-IF_TYPE_X25_PLE=40,
-IF_TYPE_ISO88022_LLC=41,
-IF_TYPE_OTHER=1,
-IF_TYPE_RFC877_X25=5,
-IF_TYPE_ISO88025_TOKENRING=9,
-IF_TYPE_IEEE1394=144,
-IF_TYPE_RECEIVE_ONLY=145,
-IF_TYPE_IPFORWARD=142,
-IF_TYPE_MSDSL=143,
-IF_TYPE_DTM=140,
-IF_TYPE_DCN=141,
-IF_TYPE_LAP_D=77,
-IF_TYPE_ISDN_U=76,
-IF_TYPE_ISDN_S=75,
-IF_TYPE_DLSW=74,
-IF_TYPE_ESCON=73,
-IF_TYPE_IBM370PARCHAN=72,
-IF_TYPE_IEEE80211=71,
-IF_TYPE_CHANNEL=70,
-IF_TYPE_RSRB=79,
-IF_TYPE_IPSWITCH=78,
+    public record NetworkConnection
+    {
+        public int Id;
+        public DateTimeOffset Timestamp;
+        public int ConnectedTime;
+        public DateTimeOffset ConnectStartTime;
+        public long InterfaceLuid;
+    
+        public InterfaceType InterfaceType;
+        public int L2ProfileFlags;
+        public int L2ProfileId;
+        public IdMapInfo UserIdMapInfo;
+        public IdMapInfo AppIdMapInfo;
 
+        public NetworkConnection(int id, DateTime timestamp, int connectedTime, DateTimeOffset connectStartTime, long interfaceLuid, int l2ProfileFlags, int l2ProfileId, IdMapInfo userIdMapInfo, IdMapInfo appIdMapInfo)
+        {
+            Id = id;
+         
+            ConnectedTime = connectedTime;
+            ConnectStartTime = connectStartTime;
+            InterfaceLuid = interfaceLuid;
+            L2ProfileFlags = l2ProfileFlags;
+            L2ProfileId = l2ProfileId;
+            UserIdMapInfo = userIdMapInfo;
+            AppIdMapInfo = appIdMapInfo;
+
+            InterfaceType = Srum.GetInterfaceTypeFromLuid(interfaceLuid);
         }
-    
+    }
+
+    public record AppResourceUseInfo
+    {
+        public IdMapInfo AppIdMapInfo;
+
+        public long BackgroundBytesRead;
+        public long BackgroundBytesWritten;
+
+        public int BackgroundContextSwitches;
+        public long BackgroundCycleTime;
+        public int BackgroundNumberOfFlushes;
+        public int BackgroundNumReadOperations;
+        public int BackgroundNumWriteOperations;
+        public long FaceTime;
+        public long ForegroundBytesRead;
+        public long ForegroundBytesWritten;
+        public int ForegroundContextSwitches;
+        public long ForegroundCycleTime;
+        public int ForegroundNumberOfFlushes;
+        public int ForegroundNumReadOperations;
+
+        public int ForegroundNumWriteOperations;
+
+        public int Id;
+        public DateTimeOffset Timestamp;
+        public IdMapInfo UserIdMapInfo;
+
+        public AppResourceUseInfo(int id, DateTimeOffset timestamp, IdMapInfo appIdMapInfo, IdMapInfo userIdMapInfo, long backgroundBytesRead, long backgroundBytesWritten, long backgroundCycleTime, long faceTime, long foregroundBytesRead,
+            long foregroundBytesWritten, long foregroundCycleTime, int backgroundContextSwitches, int backgroundNumberOfFlushes, int backgroundNumReadOperations, int backgroundNumWriteOperations, int foregroundContextSwitches,
+            int foregroundNumberOfFlushes, int foregroundNumReadOperations, int foregroundNumWriteOperations)
+        {
+            Id = id;
+            Timestamp = timestamp;
+            AppIdMapInfo = appIdMapInfo;
+            UserIdMapInfo = userIdMapInfo;
+            BackgroundBytesRead = backgroundBytesRead;
+            BackgroundBytesWritten = backgroundBytesWritten;
+            BackgroundCycleTime = backgroundCycleTime;
+            FaceTime = faceTime;
+            ForegroundBytesRead = foregroundBytesRead;
+            ForegroundBytesWritten = foregroundBytesWritten;
+            ForegroundCycleTime = foregroundCycleTime;
+            BackgroundContextSwitches = backgroundContextSwitches;
+            BackgroundNumberOfFlushes = backgroundNumberOfFlushes;
+            BackgroundNumReadOperations = backgroundNumReadOperations;
+            BackgroundNumWriteOperations = backgroundNumWriteOperations;
+            ForegroundContextSwitches = foregroundContextSwitches;
+            ForegroundNumberOfFlushes = foregroundNumberOfFlushes;
+            ForegroundNumReadOperations = foregroundNumReadOperations;
+            ForegroundNumWriteOperations = foregroundNumWriteOperations;
+        }
+    }
+
+    public enum InterfaceType
+    {
+        IF_TYPE_CES = 133,
+        IF_TYPE_COFFEE = 132,
+        IF_TYPE_TUNNEL = 131,
+        IF_TYPE_A12MPPSWITCH = 130,
+        IF_TYPE_L3_IPXVLAN = 137,
+        IF_TYPE_L3_IPVLAN = 136,
+        IF_TYPE_L2_VLAN = 135,
+        IF_TYPE_ATM_SUBINTERFACE = 134,
+        IF_TYPE_MEDIAMAILOVERIP = 139,
+        IF_TYPE_DIGITALPOWERLINE = 138,
+        IF_TYPE_SOFTWARE_LOOPBACK = 24,
+        IF_TYPE_EON = 25,
+        IF_TYPE_ETHERNET_3MBIT = 26,
+        IF_TYPE_NSIP = 27,
+        IF_TYPE_BASIC_ISDN = 20,
+        IF_TYPE_PRIMARY_ISDN = 21,
+        IF_TYPE_PROP_POINT2POINT_SERIAL = 22,
+        IF_TYPE_PPP = 23,
+        IF_TYPE_SLIP = 28,
+        IF_TYPE_ULTRA = 29,
+        IF_TYPE_DDN_X25 = 4,
+        IF_TYPE_ISO88024_TOKENBUS = 8,
+        IF_TYPE_LAP_F = 119,
+        IF_TYPE_V37 = 120,
+        IF_TYPE_X25_MLP = 121,
+        IF_TYPE_X25_HUNTGROUP = 122,
+        IF_TYPE_TRANSPHDLC = 123,
+        IF_TYPE_INTERLEAVE = 124,
+        IF_TYPE_FAST = 125,
+        IF_TYPE_IP = 126,
+        IF_TYPE_DOCSCABLE_MACLAYER = 127,
+        IF_TYPE_DOCSCABLE_DOWNSTREAM = 128,
+        IF_TYPE_DOCSCABLE_UPSTREAM = 129,
+        IF_TYPE_HDLC = 118,
+        IF_TYPE_AFLANE_8023 = 59,
+        IF_TYPE_FRAMERELAY_INTERCONNECT = 58,
+        IF_TYPE_IEEE80212 = 55,
+        IF_TYPE_PROP_MULTIPLEXOR = 54,
+        IF_TYPE_HIPPIINTERFACE = 57,
+        IF_TYPE_FIBRECHANNEL = 56,
+        IF_TYPE_SONET_VT = 51,
+        IF_TYPE_SONET_PATH = 50,
+        IF_TYPE_PROP_VIRTUAL = 53,
+        IF_TYPE_SMDS_ICIP = 52,
+        IF_TYPE_ISO88025_FIBER = 115,
+        IF_TYPE_IPOVER_ATM = 114,
+        IF_TYPE_ARAP = 88,
+        IF_TYPE_PROP_CNLS = 89,
+        IF_TYPE_STACKTOSTACK = 111,
+        IF_TYPE_IPOVER_CLAW = 110,
+        IF_TYPE_MPC = 113,
+        IF_TYPE_VIRTUALIPADDRESS = 112,
+        IF_TYPE_DS0_BUNDLE = 82,
+        IF_TYPE_BSC = 83,
+        IF_TYPE_ATM_LOGICAL = 80,
+        IF_TYPE_DS0 = 81,
+        IF_TYPE_ISO88025R_DTR = 86,
+        IF_TYPE_EPLRS = 87,
+        IF_TYPE_ASYNC = 84,
+        IF_TYPE_CNR = 85,
+        IF_TYPE_HDH_1822 = 3,
+        IF_TYPE_IS088023_CSMACD = 7,
+        IF_TYPE_PPPMULTILINKBUNDLE = 108,
+        IF_TYPE_IPOVER_CDLC = 109,
+        IF_TYPE_VOICE_FXS = 102,
+        IF_TYPE_VOICE_ENCAP = 103,
+        IF_TYPE_VOICE_EM = 100,
+        IF_TYPE_VOICE_FXO = 101,
+        IF_TYPE_ATM_FUNI = 106,
+        IF_TYPE_ATM_IMA = 107,
+        IF_TYPE_VOICE_OVERIP = 104,
+        IF_TYPE_ATM_DXI = 105,
+        IF_TYPE_SONET = 39,
+        IF_TYPE_MIO_X25 = 38,
+        IF_TYPE_RS232 = 33,
+        IF_TYPE_FRAMERELAY = 32,
+        IF_TYPE_SIP = 31,
+        IF_TYPE_DS3 = 30,
+        IF_TYPE_ATM = 37,
+        IF_TYPE_ARCNET_PLUS = 36,
+        IF_TYPE_ARCNET = 35,
+        IF_TYPE_PARA = 34,
+        IF_TYPE_AFLANE_8025 = 60,
+        IF_TYPE_CCTEMUL = 61,
+        IF_TYPE_FASTETHER = 62,
+        IF_TYPE_ISDN = 63,
+        IF_TYPE_V11 = 64,
+        IF_TYPE_V36 = 65,
+        IF_TYPE_G703_64K = 66,
+        IF_TYPE_G703_2MB = 67,
+        IF_TYPE_QLLC = 68,
+        IF_TYPE_FASTETHER_FX = 69,
+        IF_TYPE_REGULAR_1822 = 2,
+        IF_TYPE_ETHERNET_CSMACD = 6,
+        IF_TYPE_MYRINET = 99,
+        IF_TYPE_ISO88025_CRFPRINT = 98,
+        IF_TYPE_TERMPAD = 91,
+        IF_TYPE_HOSTPAD = 90,
+        IF_TYPE_X213 = 93,
+        IF_TYPE_FRAMERELAY_MPI = 92,
+        IF_TYPE_RADSL = 95,
+        IF_TYPE_ADSL = 94,
+        IF_TYPE_VDSL = 97,
+        IF_TYPE_SDSL = 96,
+        IF_TYPE_STARLAN = 11,
+        IF_TYPE_ISO88026_MAN = 10,
+        IF_TYPE_PROTEON_80MBIT = 13,
+        IF_TYPE_PROTEON_10MBIT = 12,
+        IF_TYPE_FDDI = 15,
+        IF_TYPE_HYPERCHANNEL = 14,
+        IF_TYPE_SDLC = 17,
+        IF_TYPE_LAP_B = 16,
+        IF_TYPE_E1 = 19,
+        IF_TYPE_DS1 = 18,
+        IF_TYPE_GIGABITETHERNET = 117,
+        IF_TYPE_TDLC = 116,
+        IF_TYPE_MODEM = 48,
+        IF_TYPE_AAL5 = 49,
+        IF_TYPE_HSSI = 46,
+        IF_TYPE_HIPPI = 47,
+        IF_TYPE_FRAMERELAY_SERVICE = 44,
+        IF_TYPE_V35 = 45,
+        IF_TYPE_LOCALTALK = 42,
+        IF_TYPE_SMDS_DXI = 43,
+        IF_TYPE_X25_PLE = 40,
+        IF_TYPE_ISO88022_LLC = 41,
+        IF_TYPE_OTHER = 1,
+        IF_TYPE_RFC877_X25 = 5,
+        IF_TYPE_ISO88025_TOKENRING = 9,
+        IF_TYPE_IEEE1394 = 144,
+        IF_TYPE_RECEIVE_ONLY = 145,
+        IF_TYPE_IPFORWARD = 142,
+        IF_TYPE_MSDSL = 143,
+        IF_TYPE_DTM = 140,
+        IF_TYPE_DCN = 141,
+        IF_TYPE_LAP_D = 77,
+        IF_TYPE_ISDN_U = 76,
+        IF_TYPE_ISDN_S = 75,
+        IF_TYPE_DLSW = 74,
+        IF_TYPE_ESCON = 73,
+        IF_TYPE_IBM370PARCHAN = 72,
+        IF_TYPE_IEEE80211 = 71,
+        IF_TYPE_CHANNEL = 70,
+        IF_TYPE_RSRB = 79,
+        IF_TYPE_IPSWITCH = 78
+    }
+
     //https://docs.microsoft.com/en-us/windows/win32/extensible-storage-engine/jet-coltyp
-    
+
     public class Srum
     {
-        /// <summary>
-        /// {973F5D5C-1D90-4944-BE8E-24B94231A174}
-        /// </summary>
-        /// <param name="session"></param>
-        /// <param name="dbid"></param>
-        private void GetNetworkUsageInfo(Session session, JET_DBID dbid)
-        {
-            using var networkUsageTable = new Table(session, dbid, "{973F5D5C-1D90-4944-BE8E-24B94231A174}", OpenTableGrbit.ReadOnly);
-
-            Api.JetSetTableSequential(session, networkUsageTable, SetTableSequentialGrbit.None);
-
-            Api.MoveBeforeFirst(session, networkUsageTable);
-            
-            while (Api.TryMoveNext(session, networkUsageTable))
-            {
-                var id = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AutoIncId"));
-                var appId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AppId"));
-                var userId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "UserId"));
-                var br = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "BytesRecvd"));
-                var bs = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "BytesSent"));
-                var iL = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "InterfaceLuid"));
-                var pf = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileFlags"));
-                var pId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileId"));
-                var dt = Api.RetrieveColumnAsDateTime(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "TimeStamp"));
-
-                var app = IdMap[appId.Value];
-                var user = IdMap[userId.Value];
-                
-                var nu = new NetworkUsage(id.Value,dt.Value,app,user,br.Value,bs.Value,iL.Value,pf.Value,pId.Value);
-                
-                NetworkUsages.Add(nu.Id, nu);
-            }
-
-            Api.JetResetTableSequential(session, networkUsageTable
-                , ResetTableSequentialGrbit.None);
-        }
-        
-        /// <summary>
-        /// {D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}
-        /// </summary>
-        /// <param name="session"></param>
-        /// <param name="dbid"></param>
-         private void GetApplicationResourceUsage(Session session, JET_DBID dbid)
-        {
-            using var appResourceUsage
-                = new Table(session, dbid, "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}", OpenTableGrbit.ReadOnly);
-
-            Api.JetSetTableSequential(session, appResourceUsage
-, SetTableSequentialGrbit.None);
-
-            Api.MoveBeforeFirst(session, appResourceUsage
-          
-
-);
-
-            // TABLE: {D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}
-            //X AppId: Long
-            //X AutoIncId: Long
-            
-            // BackgroundBytesRead: LongLong
-            // BackgroundBytesWritten: LongLong
-            // BackgroundCycleTime: LongLong
-            // FaceTime: LongLong
-            // ForegroundBytesRead: LongLong
-            // ForegroundBytesWritten: LongLong
-            // ForegroundCycleTime: LongLong
-            
-            // BackgroundContextSwitches: Long
-            // BackgroundNumberOfFlushes: Long
-            // BackgroundNumReadOperations: Long
-            // BackgroundNumWriteOperations: Long
-            // ForegroundContextSwitches: Long
-            // ForegroundNumberOfFlushes: Long
-            // ForegroundNumReadOperations: Long
-            // ForegroundNumWriteOperations: Long
-            
-            //X TimeStamp: DateTime
-            //X UserId: Long
-          
-
-            while (Api.TryMoveNext(session, appResourceUsage
-))
-            {
-                var id = Api.RetrieveColumnAsInt32(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "AutoIncId"));
-                
-                var appId = Api.RetrieveColumnAsInt32(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "AppId"));
-                
-                var userId = Api.RetrieveColumnAsInt32(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "UserId"));
-                
-                var dt = Api.RetrieveColumnAsDateTime(session, appResourceUsage
-                    , Api.GetTableColumnid(session, appResourceUsage
-                        , "TimeStamp"));
-                
-                var br = Api.RetrieveColumnAsInt64(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "BytesRecvd"));
-                var bs = Api.RetrieveColumnAsInt64(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "BytesSent"));
-                var iL = Api.RetrieveColumnAsInt64(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "InterfaceLuid"));
-                var pf = Api.RetrieveColumnAsInt32(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "L2ProfileFlags"));
-                var pId = Api.RetrieveColumnAsInt32(session, appResourceUsage
-, Api.GetTableColumnid(session, appResourceUsage
-, "L2ProfileId"));
-
-                
-
-                var app = IdMap[appId.Value];
-                var user = IdMap[userId.Value];
-
-                var nu = new NetworkUsage(id.Value,dt.Value,app,user,br.Value,bs.Value,iL.Value,pf.Value,pId.Value);
-                
-                NetworkUsages.Add(nu.Id, nu);
-            }
-
-            Api.JetResetTableSequential(session, appResourceUsage
-
-                , ResetTableSequentialGrbit.None);
-        }
-
-
-      
-        
-        public static InterfaceType GetInterfaceTypeFromLuid(long val)
-        {
-            var b = BitConverter.GetBytes(val);
-            var intType = BitConverter.ToInt16(b, 6);
-
-            return (InterfaceType) intType;
-
-        }
-        
-        
         public enum SidTypeEnum
         {
             [Description("SID does not map to a common SID or this is a user SID")]
@@ -795,21 +732,23 @@ IF_TYPE_IPSWITCH=78,
             ServiceAssertedIdentity
         }
 
+        public readonly Dictionary<int, AppResourceUseInfo> AppResourceUseInfos;
+
         public readonly Dictionary<int, IdMapInfo> IdMap;
         public readonly Dictionary<int, NetworkUsage> NetworkUsages;
+        public readonly Dictionary<int, NetworkConnection> NetworkConnections;
 
         public readonly Dictionary<string, string> SidToUser;
 
-        public Srum(string fileName,string softwareHive)
+        public Srum(string fileName, string softwareHive)
         {
-
             if (File.Exists(fileName) == false)
             {
                 throw new FileNotFoundException($"'{fileName}' does not exist!");
             }
 
             SidToUser = new Dictionary<string, string>();
-            
+
             if (softwareHive != null)
             {
                 if (File.Exists(softwareHive) == false)
@@ -822,17 +761,16 @@ IF_TYPE_IPSWITCH=78,
 
                 foreach (var registryKey in k.SubKeys)
                 {
-
                     var kd = reg.GetKey(registryKey.KeyPath);
-                    
+
                     var v = kd.Values.SingleOrDefault(t => t.ValueName == "ProfileImagePath");
                     if (v != null)
                     {
-                        SidToUser.Add(registryKey.KeyName,Path.GetFileName(v.ValueData));
+                        SidToUser.Add(registryKey.KeyName, Path.GetFileName(v.ValueData));
                     }
                 }
             }
-            
+
             using var instance = new Instance("pulldata");
             instance.Parameters.Recovery = false;
             instance.Init();
@@ -843,24 +781,22 @@ IF_TYPE_IPSWITCH=78,
 
             IdMap = new Dictionary<int, IdMapInfo>();
             NetworkUsages = new Dictionary<int, NetworkUsage>();
+            AppResourceUseInfos = new Dictionary<int, AppResourceUseInfo>();
+            NetworkConnections = new Dictionary<int, NetworkConnection>();
 
             BuildIdMap(session, dbid);
             GetNetworkUsageInfo(session, dbid);
             GetApplicationResourceUsage(session, dbid);
-            
-            // 708  TABLE: {DD6636C4-8929-4683-974E-22C046A43763} Network Connections
-            
-            // 1  TABLE: {5C8CF1C7-7257-4F13-B223-970EF5939312} unknown
-            // 302  TABLE: {7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F} unknown
+            GetNetworkConnections(session, dbid);
+
+
+        
 
             // 478  TABLE: {D10CA2FE-6FCF-4F6D-848E-B2E99266FA86} Push Notification Data
-         
-            
             // 799  TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37} Energy Usage
             // 902  TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT Energy Usage LT
-         
-
-
+            // 1  TABLE: {5C8CF1C7-7257-4F13-B223-970EF5939312} unknown
+            // 302  TABLE: {7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F} unknown
 
             // foreach (string table in Api.GetTableNames(session, dbid))
             // {
@@ -884,7 +820,7 @@ IF_TYPE_IPSWITCH=78,
             //
             //
             // }
-            
+
             // foreach (string table in Api.GetTableNames(session, dbid))
             // {
             //     Console.WriteLine($"TABLE: {table}");
@@ -901,7 +837,156 @@ IF_TYPE_IPSWITCH=78,
             //
         }
 
-       
+        
+          /// <summary>
+        ///     {DD6636C4-8929-4683-974E-22C046A43763}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+        private void GetNetworkConnections(Session session, JET_DBID dbid)
+        {
+            using var networkUsageTable = new Table(session, dbid, "{DD6636C4-8929-4683-974E-22C046A43763}", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, networkUsageTable, SetTableSequentialGrbit.None);
+
+            Api.MoveBeforeFirst(session, networkUsageTable);
+
+            while (Api.TryMoveNext(session, networkUsageTable))
+            {
+        
+                var id = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AutoIncId"));
+                var appId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AppId"));
+                var userId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "UserId"));
+                var iL = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "InterfaceLuid"));
+                var pf = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileFlags"));
+                var pId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileId"));
+                var dt = Api.RetrieveColumnAsDateTime(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "TimeStamp"));
+
+                var ct = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "ConnectedTime"));
+                var cst = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "ConnectStartTime"));
+                
+                var app = IdMap[appId.Value];
+                var user = IdMap[userId.Value];
+
+                var cstV = DateTimeOffset.FromFileTime(cst.Value).ToUniversalTime();
+                
+                var nu = new NetworkConnection(id.Value, dt.Value,ct.Value,cstV,iL.Value,pf.Value,pId.Value,user,app);
+
+                NetworkConnections.Add(nu.Id, nu);
+            }
+
+            Api.JetResetTableSequential(session, networkUsageTable
+                , ResetTableSequentialGrbit.None);
+        }
+          
+          
+        /// <summary>
+        ///     {973F5D5C-1D90-4944-BE8E-24B94231A174}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+        private void GetNetworkUsageInfo(Session session, JET_DBID dbid)
+        {
+            using var networkUsageTable = new Table(session, dbid, "{973F5D5C-1D90-4944-BE8E-24B94231A174}", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, networkUsageTable, SetTableSequentialGrbit.None);
+
+            Api.MoveBeforeFirst(session, networkUsageTable);
+
+            while (Api.TryMoveNext(session, networkUsageTable))
+            {
+                var id = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AutoIncId"));
+                var appId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AppId"));
+                var userId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "UserId"));
+                var br = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "BytesRecvd"));
+                var bs = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "BytesSent"));
+                var iL = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "InterfaceLuid"));
+                var pf = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileFlags"));
+                var pId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileId"));
+                var dt = Api.RetrieveColumnAsDateTime(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "TimeStamp"));
+
+                var app = IdMap[appId.Value];
+                var user = IdMap[userId.Value];
+
+                var nu = new NetworkUsage(id.Value, dt.Value, app, user, br.Value, bs.Value, iL.Value, pf.Value, pId.Value);
+
+                NetworkUsages.Add(nu.Id, nu);
+            }
+
+            Api.JetResetTableSequential(session, networkUsageTable
+                , ResetTableSequentialGrbit.None);
+        }
+
+        /// <summary>
+        ///     {D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+        private void GetApplicationResourceUsage(Session session, JET_DBID dbid)
+        {
+            using var appResourceUsage
+                = new Table(session, dbid, "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, appResourceUsage
+                , SetTableSequentialGrbit.None);
+
+            Api.MoveBeforeFirst(session, appResourceUsage
+            );
+
+
+            while (Api.TryMoveNext(session, appResourceUsage
+            ))
+            {
+                var id = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "AutoIncId"));
+
+                var appId = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "AppId"));
+
+                var userId = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "UserId"));
+
+                var dt = Api.RetrieveColumnAsDateTime(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "TimeStamp"));
+
+                var bbr = Api.RetrieveColumnAsInt64(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundBytesRead"));
+                var bbw = Api.RetrieveColumnAsInt64(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundBytesWritten"));
+                var bct = Api.RetrieveColumnAsInt64(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundCycleTime"));
+                var fbr = Api.RetrieveColumnAsInt64(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundBytesRead"));
+                var fbw = Api.RetrieveColumnAsInt64(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundBytesWritten"));
+                var fct = Api.RetrieveColumnAsInt64(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundCycleTime"));
+                var ft = Api.RetrieveColumnAsInt64(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "FaceTime"));
+
+
+                var bcs = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundContextSwitches"));
+                var bnf = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundNumberOfFlushes"));
+                var bro = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundNumReadOperations"));
+                var bwo = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundNumWriteOperations"));
+                
+                var fcs = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundContextSwitches"));
+                var fnf = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundNumberOfFlushes"));
+                var fro = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundNumReadOperations"));
+                var fwo = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundNumWriteOperations"));
+
+
+                var app = IdMap[appId.Value];
+                var user = IdMap[userId.Value];
+
+                var ari = new AppResourceUseInfo(id.Value, dt.Value, app, user, bbr.Value, bbw.Value, bct.Value, ft.Value, fbr.Value, fbw.Value, fct.Value, bcs.Value, bnf.Value, bro.Value, bwo.Value, fcs.Value, fnf.Value, fro.Value,
+                    fwo.Value);
+
+                AppResourceUseInfos.Add(ari.Id, ari);
+            }
+
+            Api.JetResetTableSequential(session, appResourceUsage
+                , ResetTableSequentialGrbit.None);
+        }
+
+
+        public static InterfaceType GetInterfaceTypeFromLuid(long val)
+        {
+            var b = BitConverter.GetBytes(val);
+            var intType = BitConverter.ToInt16(b, 6);
+
+            return (InterfaceType) intType;
+        }
+
 
         private void BuildIdMap(Session session, JET_DBID dbid)
         {
@@ -913,15 +998,9 @@ IF_TYPE_IPSWITCH=78,
 
             while (Api.TryMoveNext(session, idMapTable))
             {
-                var idType = Api.RetrieveColumnAsByte(session, idMapTable
-                    , Api.GetTableColumnid(session, idMapTable
-                        , "IdType"));
-                var index = Api.RetrieveColumnAsInt32(session, idMapTable
-                    , Api.GetTableColumnid(session, idMapTable
-                        , "IdIndex"));
-                var blob = Api.RetrieveColumn(session, idMapTable
-                    , Api.GetTableColumnid(session, idMapTable
-                        , "IdBlob"));
+                var idType = Api.RetrieveColumnAsByte(session, idMapTable, Api.GetTableColumnid(session, idMapTable, "IdType"));
+                var index = Api.RetrieveColumnAsInt32(session, idMapTable, Api.GetTableColumnid(session, idMapTable, "IdIndex"));
+                var blob = Api.RetrieveColumn(session, idMapTable, Api.GetTableColumnid(session, idMapTable, "IdBlob"));
 
                 var outVal = string.Empty;
 
@@ -951,7 +1030,7 @@ IF_TYPE_IPSWITCH=78,
 
 
                 var mInfo = new IdMapInfo(outVal, (MapType) idType, index.Value);
-                
+
                 IdMap.Add(mInfo.Index, mInfo);
             }
 
