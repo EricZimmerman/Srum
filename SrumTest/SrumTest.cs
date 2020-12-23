@@ -10,12 +10,12 @@ namespace SrumTest
     {
         
         [Test]
-        public void BcdHiveShouldHaveBcdHiveType()
+        public void BuildingAutomation()
         {
             var r = new Srum(@"C:\Temp\SRUDB.dat",@"C:\Temp\toutReg\C\Windows\System32\config\SOFTWARE");
 
             
-            foreach (var idMapInfo in r.AppResourceUseInfos)
+            foreach (var idMapInfo in r.PushNotifications)
             {
                 var user = idMapInfo.Value.UserIdMapInfo.RawValue;
 
@@ -24,7 +24,7 @@ namespace SrumTest
                     user = r.SidToUser[user];
                 }
                 
-                Console.WriteLine($"id: {idMapInfo.Value.Id}, Time: {idMapInfo.Value.Timestamp}, User: {user}, {idMapInfo.Value.AppIdMapInfo.ExeInfo}, FG Read: {idMapInfo.Value.ForegroundBytesRead}, FG Written: {idMapInfo.Value.ForegroundBytesWritten}");
+                Console.WriteLine($"id: {idMapInfo.Value.Id}, Time: {idMapInfo.Value.Timestamp}, User: {user}, {idMapInfo.Value.AppIdMapInfo.ExeInfo}, Payload Size: {idMapInfo.Value.PayloadSize}");
                 
             }
         }

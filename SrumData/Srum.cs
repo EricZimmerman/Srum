@@ -69,6 +69,8 @@ namespace SrumData
         public int L2ProfileId;
         public DateTimeOffset Timestamp;
         public IdMapInfo UserIdMapInfo;
+        
+        public static string TableName => "{973F5D5C-1D90-4944-BE8E-24B94231A174}";
 
         public NetworkUsage(int id, DateTime timestamp, IdMapInfo appId, IdMapInfo userId, long bytesReceived, long bytesSent,
             long interfaceLuid, int l2ProfileFlags, int l2ProfileId)
@@ -86,25 +88,56 @@ namespace SrumData
             InterfaceType = Srum.GetInterfaceTypeFromLuid(interfaceLuid);
         }
     }
-    
+
+
+    public class PushNotification
+    {
+        public IdMapInfo AppIdMapInfo;
+        public int Id;
+        public int NetworkType;
+        public int NotificationType;
+        public int PayloadSize;
+        public DateTimeOffset Timestamp;
+
+        public IdMapInfo UserIdMapInfo;
+
+        public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA86}";
+        
+        public PushNotification(int id, DateTime timestamp, int networkType, int notificationType, int payloadSize, IdMapInfo userIdMapInfo, IdMapInfo appIdMapInfo)
+        {
+            Id = id;
+            var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+            Timestamp = new DateTimeOffset(tsUtc);
+
+            NetworkType = networkType;
+            NotificationType = notificationType;
+            PayloadSize = payloadSize;
+
+            UserIdMapInfo = userIdMapInfo;
+            AppIdMapInfo = appIdMapInfo;
+        }
+    }
+
     public class NetworkConnection
     {
-        public int Id;
-        public DateTimeOffset Timestamp;
+        public IdMapInfo AppIdMapInfo;
         public int ConnectedTime;
         public DateTimeOffset ConnectStartTime;
+        public int Id;
         public long InterfaceLuid;
-    
+
         public InterfaceType InterfaceType;
         public int L2ProfileFlags;
         public int L2ProfileId;
+        public DateTimeOffset Timestamp;
         public IdMapInfo UserIdMapInfo;
-        public IdMapInfo AppIdMapInfo;
+        
+        public static string TableName => "{DD6636C4-8929-4683-974E-22C046A43763}";
 
         public NetworkConnection(int id, DateTime timestamp, int connectedTime, DateTimeOffset connectStartTime, long interfaceLuid, int l2ProfileFlags, int l2ProfileId, IdMapInfo userIdMapInfo, IdMapInfo appIdMapInfo)
         {
             Id = id;
-         
+
             ConnectedTime = connectedTime;
             ConnectStartTime = connectStartTime;
             InterfaceLuid = interfaceLuid;
@@ -142,6 +175,8 @@ namespace SrumData
         public int Id;
         public DateTimeOffset Timestamp;
         public IdMapInfo UserIdMapInfo;
+        
+        public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}";
 
         public AppResourceUseInfo(int id, DateTimeOffset timestamp, IdMapInfo appIdMapInfo, IdMapInfo userIdMapInfo, long backgroundBytesRead, long backgroundBytesWritten, long backgroundCycleTime, long faceTime, long foregroundBytesRead,
             long foregroundBytesWritten, long foregroundCycleTime, int backgroundContextSwitches, int backgroundNumberOfFlushes, int backgroundNumReadOperations, int backgroundNumWriteOperations, int foregroundContextSwitches,
@@ -735,8 +770,9 @@ namespace SrumData
         public readonly Dictionary<int, AppResourceUseInfo> AppResourceUseInfos;
 
         public readonly Dictionary<int, IdMapInfo> IdMap;
-        public readonly Dictionary<int, NetworkUsage> NetworkUsages;
         public readonly Dictionary<int, NetworkConnection> NetworkConnections;
+        public readonly Dictionary<int, NetworkUsage> NetworkUsages;
+        public readonly Dictionary<int, PushNotification> PushNotifications;
 
         public readonly Dictionary<string, string> SidToUser;
 
@@ -783,43 +819,16 @@ namespace SrumData
             NetworkUsages = new Dictionary<int, NetworkUsage>();
             AppResourceUseInfos = new Dictionary<int, AppResourceUseInfo>();
             NetworkConnections = new Dictionary<int, NetworkConnection>();
+            PushNotifications = new Dictionary<int, PushNotification>();
 
             BuildIdMap(session, dbid);
             GetNetworkUsageInfo(session, dbid);
             GetApplicationResourceUsage(session, dbid);
             GetNetworkConnections(session, dbid);
+            GetPushNotifications(session, dbid);
 
 
-        
-
-            // 478  TABLE: {D10CA2FE-6FCF-4F6D-848E-B2E99266FA86} Push Notification Data
-            // 799  TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37} Energy Usage
-            // 902  TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT Energy Usage LT
-            // 1  TABLE: {5C8CF1C7-7257-4F13-B223-970EF5939312} unknown
-            // 302  TABLE: {7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F} unknown
-
-            // foreach (string table in Api.GetTableNames(session, dbid))
-            // {
-            //     Console.WriteLine($"TABLE: {table}");
-            //
-            //     foreach (ColumnInfo column in Api.GetTableColumns(session, dbid, table))
-            //     {
-            //         Console.WriteLine("\t{0}", column.Name);
-            //         Console.WriteLine("\t\tColtyp:     {0}", column.Coltyp);
-            //         Console.WriteLine("\t\tColumnid:   {0:N0}", column.Columnid);
-            //         if (JET_coltyp.LongText == column.Coltyp || JET_coltyp.Text == column.Coltyp)
-            //         {
-            //             Console.WriteLine("\t\tCode page:  {0}", column.Cp);
-            //         }
-            //
-            //         Console.WriteLine("\t\tMax length: {0}", column.MaxLength);
-            //         Console.WriteLine("\t\tGrbit:      {0}", column.Grbit);
-            //
-            //         Console.WriteLine("------------------------------------");
-            //     }
-            //
-            //
-            // }
+         
 
             // foreach (string table in Api.GetTableNames(session, dbid))
             // {
@@ -837,8 +846,42 @@ namespace SrumData
             //
         }
 
-        
-          /// <summary>
+        /// <summary>
+        ///     {D10CA2FE-6FCF-4F6D-848E-B2E99266FA86}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+        private void GetPushNotifications(Session session, JET_DBID dbid)
+        {
+            using var pushTable
+                = new Table(session, dbid, "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA86}", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, pushTable, SetTableSequentialGrbit.None);
+            Api.MoveBeforeFirst(session, pushTable);
+
+            while (Api.TryMoveNext(session, pushTable))
+            {
+                var id = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AutoIncId"));
+                var appId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AppId"));
+                var userId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "UserId"));
+                var nT = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "NetworkType"));
+                var notT = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "NotificationType"));
+                var ps = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "PayloadSize"));
+                var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
+
+                var app = IdMap[appId.Value];
+                var user = IdMap[userId.Value];
+                
+                var pu = new PushNotification(id.Value, dt.Value, nT.Value, notT.Value, ps.Value, user, app);
+
+                PushNotifications.Add(pu.Id, pu);
+            }
+
+            Api.JetResetTableSequential(session, pushTable
+                , ResetTableSequentialGrbit.None);
+        }
+
+        /// <summary>
         ///     {DD6636C4-8929-4683-974E-22C046A43763}
         /// </summary>
         /// <param name="session"></param>
@@ -853,7 +896,6 @@ namespace SrumData
 
             while (Api.TryMoveNext(session, networkUsageTable))
             {
-        
                 var id = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AutoIncId"));
                 var appId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "AppId"));
                 var userId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "UserId"));
@@ -864,13 +906,13 @@ namespace SrumData
 
                 var ct = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "ConnectedTime"));
                 var cst = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "ConnectStartTime"));
-                
+
                 var app = IdMap[appId.Value];
                 var user = IdMap[userId.Value];
 
                 var cstV = DateTimeOffset.FromFileTime(cst.Value).ToUniversalTime();
-                
-                var nu = new NetworkConnection(id.Value, dt.Value,ct.Value,cstV,iL.Value,pf.Value,pId.Value,user,app);
+
+                var nu = new NetworkConnection(id.Value, dt.Value, ct.Value, cstV, iL.Value, pf.Value, pId.Value, user, app);
 
                 NetworkConnections.Add(nu.Id, nu);
             }
@@ -878,8 +920,8 @@ namespace SrumData
             Api.JetResetTableSequential(session, networkUsageTable
                 , ResetTableSequentialGrbit.None);
         }
-          
-          
+
+
         /// <summary>
         ///     {973F5D5C-1D90-4944-BE8E-24B94231A174}
         /// </summary>
@@ -927,15 +969,11 @@ namespace SrumData
             using var appResourceUsage
                 = new Table(session, dbid, "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}", OpenTableGrbit.ReadOnly);
 
-            Api.JetSetTableSequential(session, appResourceUsage
-                , SetTableSequentialGrbit.None);
-
-            Api.MoveBeforeFirst(session, appResourceUsage
-            );
-
-
-            while (Api.TryMoveNext(session, appResourceUsage
-            ))
+            Api.JetSetTableSequential(session, appResourceUsage, SetTableSequentialGrbit.None);
+            
+            Api.MoveBeforeFirst(session, appResourceUsage);
+            
+            while (Api.TryMoveNext(session, appResourceUsage))
             {
                 var id = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "AutoIncId"));
 
@@ -958,7 +996,7 @@ namespace SrumData
                 var bnf = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundNumberOfFlushes"));
                 var bro = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundNumReadOperations"));
                 var bwo = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "BackgroundNumWriteOperations"));
-                
+
                 var fcs = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundContextSwitches"));
                 var fnf = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundNumberOfFlushes"));
                 var fro = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundNumReadOperations"));
@@ -974,8 +1012,7 @@ namespace SrumData
                 AppResourceUseInfos.Add(ari.Id, ari);
             }
 
-            Api.JetResetTableSequential(session, appResourceUsage
-                , ResetTableSequentialGrbit.None);
+            Api.JetResetTableSequential(session, appResourceUsage, ResetTableSequentialGrbit.None);
         }
 
 
