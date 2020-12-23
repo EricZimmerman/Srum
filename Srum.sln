@@ -3,13 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio Version 16
 VisualStudioVersion = 16.0.30804.86
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrumData", "SrumData\SrumData.csproj", "{C4C86FBB-0AF4-46F2-B05D-D61BA3BD0BDC}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SrumData", "SrumData\SrumData.csproj", "{C4C86FBB-0AF4-46F2-B05D-D61BA3BD0BDC}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrumExplorer", "SrumExplorer\SrumExplorer.csproj", "{97994D18-F6A5-4C9B-A292-2B57C6428C55}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SrumECmd", "SrumECmd\SrumECmd.csproj", "{50A11364-A700-4A80-BD40-672BAA45D1F7}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrumECmd", "SrumECmd\SrumECmd.csproj", "{50A11364-A700-4A80-BD40-672BAA45D1F7}"
-EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SrumTest", "SrumTest\SrumTest.csproj", "{23FEC67C-E1A8-49C6-BA5E-BED5691ED241}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "SrumTest", "SrumTest\SrumTest.csproj", "{23FEC67C-E1A8-49C6-BA5E-BED5691ED241}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -21,10 +19,6 @@ Global
 		{C4C86FBB-0AF4-46F2-B05D-D61BA3BD0BDC}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{C4C86FBB-0AF4-46F2-B05D-D61BA3BD0BDC}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{C4C86FBB-0AF4-46F2-B05D-D61BA3BD0BDC}.Release|Any CPU.Build.0 = Release|Any CPU
-		{97994D18-F6A5-4C9B-A292-2B57C6428C55}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{97994D18-F6A5-4C9B-A292-2B57C6428C55}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{97994D18-F6A5-4C9B-A292-2B57C6428C55}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{97994D18-F6A5-4C9B-A292-2B57C6428C55}.Release|Any CPU.Build.0 = Release|Any CPU
 		{50A11364-A700-4A80-BD40-672BAA45D1F7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
 		{50A11364-A700-4A80-BD40-672BAA45D1F7}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{50A11364-A700-4A80-BD40-672BAA45D1F7}.Release|Any CPU.ActiveCfg = Release|Any CPU

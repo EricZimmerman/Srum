@@ -10,7 +10,7 @@ using Registry;
 
 namespace SrumData
 {
-    public record IdMapInfo
+    public class IdMapInfo
     {
         public string ExeInfo;
         public string ExeInfoDescription;
@@ -31,7 +31,7 @@ namespace SrumData
             if (rawValue.StartsWith("!!"))
             {
                 var tempVal = RawValue.Substring(2); //strip !!
-                var segs = tempVal.Split("!");
+                var segs = tempVal.Split('!');
 
                 ExeInfo = segs[0];
 
@@ -57,7 +57,7 @@ namespace SrumData
         Sid = 3
     }
 
-    public record NetworkUsage
+    public class NetworkUsage
     {
         public IdMapInfo AppIdMapInfo;
         public long BytesReceived;
@@ -87,7 +87,7 @@ namespace SrumData
         }
     }
     
-    public record NetworkConnection
+    public class NetworkConnection
     {
         public int Id;
         public DateTimeOffset Timestamp;
@@ -117,7 +117,7 @@ namespace SrumData
         }
     }
 
-    public record AppResourceUseInfo
+    public class AppResourceUseInfo
     {
         public IdMapInfo AppIdMapInfo;
 
