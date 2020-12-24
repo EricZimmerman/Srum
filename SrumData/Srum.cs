@@ -10,43 +10,63 @@ using Registry;
 
 namespace SrumData
 {
-    public class IdMapInfo
+   
+    
+    public class AppInfo
     {
-        public string ExeInfo;
-        public string ExeInfoDescription;
-        public int Index;
-        public MapType MapType;
-        public string RawValue;
-        public Srum.SidTypeEnum? SidType;
-        public DateTimeOffset? Timestamp;
-        public string Unknown;
-
-        public IdMapInfo(string rawValue, MapType type, int index)
+        public AppInfo(int index, MapType mapType, string exeInfo)
         {
-            RawValue = rawValue;
             Index = index;
-            MapType = type;
+            MapType = mapType;
+            ExeInfo = exeInfo;
 
-            ExeInfo = rawValue;
-            if (rawValue.StartsWith("!!"))
+            if (!ExeInfo.StartsWith("!!"))
             {
-                var tempVal = RawValue.Substring(2); //strip !!
-                var segs = tempVal.Split('!');
-
-                ExeInfo = segs[0];
-
-                Unknown = segs[2];
-                ExeInfoDescription = segs[3];
-
-                Timestamp = DateTimeOffset.ParseExact(segs[1], "yyyy/MM/dd:HH:mm:ss", null,
-                    DateTimeStyles.AssumeUniversal);
+                return;
             }
 
-            if (type == MapType.Sid)
-            {
-                SidType = Srum.GetSidTypeFromSidString(rawValue);
-            }
+            var tempVal = ExeInfo.Substring(2); //strip !!
+            var segs = tempVal.Split('!');
+
+            ExeInfo = segs[0];
+
+            Unknown = segs[2];
+            ExeInfoDescription = segs[3];
+
+            Timestamp = DateTimeOffset.ParseExact(segs[1], "yyyy/MM/dd:HH:mm:ss", null,
+                DateTimeStyles.AssumeUniversal);
+
         }
+
+        public int Index {get;}
+        public MapType MapType {get;}
+        
+        public string ExeInfo {get;}
+        public string ExeInfoDescription {get;}
+        
+        public DateTimeOffset? Timestamp {get;}
+        
+        public string Unknown {get;}
+        
+    }
+    
+    public class UserInfo
+    {
+        public UserInfo(int index, string sid, string userName)
+        {
+            Index = index;
+            Sid = sid;
+            UserName = userName;
+        
+            SidType = Srum.GetSidTypeFromSidString(sid);
+        }
+
+        public int Index {get;}
+        public MapType MapType => MapType.Sid;
+        public SidTypeEnum SidType {get;}
+        public string Sid {get;}
+        public string UserName {get;}
+        
     }
 
     public enum MapType
@@ -59,51 +79,60 @@ namespace SrumData
 
     public class NetworkUsage
     {
-        public IdMapInfo AppIdMapInfo;
-        public long BytesReceived;
-        public long BytesSent;
-        public int Id;
-        public long InterfaceLuid;
-        public InterfaceType InterfaceType;
-        public int L2ProfileFlags;
-        public int L2ProfileId;
-        public DateTimeOffset Timestamp;
-        public IdMapInfo UserIdMapInfo;
+       
+        public long BytesReceived {get;}
+        public long BytesSent {get;}
+        public int Id {get;}
+        public long InterfaceLuid {get;}
+        public InterfaceType InterfaceType {get;}
+        public int L2ProfileFlags {get;}
+        public int L2ProfileId {get;}
+        public string ProfileName {get;}
+        public DateTimeOffset Timestamp {get;}
+        public int UserId {get;}
+        public int AppId {get;}
         
         public static string TableName => "{973F5D5C-1D90-4944-BE8E-24B94231A174}";
 
-        public NetworkUsage(int id, DateTime timestamp, IdMapInfo appId, IdMapInfo userId, long bytesReceived, long bytesSent,
-            long interfaceLuid, int l2ProfileFlags, int l2ProfileId)
+        public NetworkUsage(int id, DateTime timestamp, int appId, int userId, long bytesReceived, long bytesSent,
+            long interfaceLuid, int l2ProfileFlags, int l2ProfileId, string profileName)
         {
             Id = id;
             var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
             Timestamp = new DateTimeOffset(tsUtc);
-            AppIdMapInfo = appId;
-            UserIdMapInfo = userId;
+            AppId = appId;
+            UserId = userId;
             BytesReceived = bytesReceived;
             BytesSent = bytesSent;
             InterfaceLuid = interfaceLuid;
             L2ProfileFlags = l2ProfileFlags;
             L2ProfileId = l2ProfileId;
+            ProfileName = profileName;
             InterfaceType = Srum.GetInterfaceTypeFromLuid(interfaceLuid);
+        }
+
+        public override string ToString()
+        {
+            return $"{Timestamp}, User id: {UserId} profile: {ProfileName}, appId: {AppId}, sent: {BytesSent} rec: {BytesReceived}";
         }
     }
 
 
     public class PushNotification
     {
-        public IdMapInfo AppIdMapInfo;
-        public int Id;
-        public int NetworkType;
-        public int NotificationType;
-        public int PayloadSize;
-        public DateTimeOffset Timestamp;
+       
+        public int Id {get;}
+        public int NetworkType {get;}
+        public int NotificationType {get;}
+        public int PayloadSize {get;}
+        public DateTimeOffset Timestamp {get;}
 
-        public IdMapInfo UserIdMapInfo;
+        public int UserId {get;}
+        public int AppId {get;}
 
         public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA86}";
         
-        public PushNotification(int id, DateTime timestamp, int networkType, int notificationType, int payloadSize, IdMapInfo userIdMapInfo, IdMapInfo appIdMapInfo)
+        public PushNotification(int id, DateTime timestamp, int networkType, int notificationType, int payloadSize, int userId, int appId)
         {
             Id = id;
             var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
@@ -113,38 +142,42 @@ namespace SrumData
             NotificationType = notificationType;
             PayloadSize = payloadSize;
 
-            UserIdMapInfo = userIdMapInfo;
-            AppIdMapInfo = appIdMapInfo;
+            UserId = userId;
+            AppId = appId;
         }
     }
 
     public class NetworkConnection
     {
-        public IdMapInfo AppIdMapInfo;
-        public int ConnectedTime;
-        public DateTimeOffset ConnectStartTime;
-        public int Id;
-        public long InterfaceLuid;
+       
+        public int ConnectedTime {get;}
+        public DateTimeOffset ConnectStartTime {get;}
+        public int Id {get;}
+        public long InterfaceLuid {get;}
 
-        public InterfaceType InterfaceType;
-        public int L2ProfileFlags;
-        public int L2ProfileId;
-        public DateTimeOffset Timestamp;
-        public IdMapInfo UserIdMapInfo;
+        public InterfaceType InterfaceType {get;}
+        public int L2ProfileFlags {get;}
+        public int L2ProfileId {get;}
+        public string ProfileName {get;}
+        public DateTimeOffset Timestamp {get;}
+        public int UserId {get;}
+        public int AppId {get;}
         
         public static string TableName => "{DD6636C4-8929-4683-974E-22C046A43763}";
 
-        public NetworkConnection(int id, DateTime timestamp, int connectedTime, DateTimeOffset connectStartTime, long interfaceLuid, int l2ProfileFlags, int l2ProfileId, IdMapInfo userIdMapInfo, IdMapInfo appIdMapInfo)
+        public NetworkConnection(int id, DateTime timestamp, int connectedTime, DateTimeOffset connectStartTime, long interfaceLuid, int l2ProfileFlags, int l2ProfileId, int userId, int appId, string profileName)
         {
             Id = id;
-
+            var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+            Timestamp = new DateTimeOffset(tsUtc);
             ConnectedTime = connectedTime;
             ConnectStartTime = connectStartTime;
             InterfaceLuid = interfaceLuid;
             L2ProfileFlags = l2ProfileFlags;
             L2ProfileId = l2ProfileId;
-            UserIdMapInfo = userIdMapInfo;
-            AppIdMapInfo = appIdMapInfo;
+            UserId = userId;
+            AppId = appId;
+            ProfileName = profileName;
 
             InterfaceType = Srum.GetInterfaceTypeFromLuid(interfaceLuid);
         }
@@ -152,8 +185,6 @@ namespace SrumData
 
     public class AppResourceUseInfo
     {
-        public IdMapInfo AppIdMapInfo;
-
         public long BackgroundBytesRead;
         public long BackgroundBytesWritten;
 
@@ -174,18 +205,19 @@ namespace SrumData
 
         public int Id;
         public DateTimeOffset Timestamp;
-        public IdMapInfo UserIdMapInfo;
+        public int UserId;
+        public int AppId;
         
         public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}";
 
-        public AppResourceUseInfo(int id, DateTimeOffset timestamp, IdMapInfo appIdMapInfo, IdMapInfo userIdMapInfo, long backgroundBytesRead, long backgroundBytesWritten, long backgroundCycleTime, long faceTime, long foregroundBytesRead,
+        public AppResourceUseInfo(int id, DateTimeOffset timestamp, int appId, int userId, long backgroundBytesRead, long backgroundBytesWritten, long backgroundCycleTime, long faceTime, long foregroundBytesRead,
             long foregroundBytesWritten, long foregroundCycleTime, int backgroundContextSwitches, int backgroundNumberOfFlushes, int backgroundNumReadOperations, int backgroundNumWriteOperations, int foregroundContextSwitches,
             int foregroundNumberOfFlushes, int foregroundNumReadOperations, int foregroundNumWriteOperations)
         {
             Id = id;
             Timestamp = timestamp;
-            AppIdMapInfo = appIdMapInfo;
-            UserIdMapInfo = userIdMapInfo;
+            AppId = appId;
+            UserId = userId;
             BackgroundBytesRead = backgroundBytesRead;
             BackgroundBytesWritten = backgroundBytesWritten;
             BackgroundCycleTime = backgroundCycleTime;
@@ -352,12 +384,7 @@ namespace SrumData
         IF_TYPE_RSRB = 79,
         IF_TYPE_IPSWITCH = 78
     }
-
-    //https://docs.microsoft.com/en-us/windows/win32/extensible-storage-engine/jet-coltyp
-
-    public class Srum
-    {
-        public enum SidTypeEnum
+     public enum SidTypeEnum
         {
             [Description("SID does not map to a common SID or this is a user SID")]
             UnknownOrUserSid,
@@ -766,15 +793,35 @@ namespace SrumData
                 "S-1-18-2: A SID that means the client's identity is asserted by a service.")]
             ServiceAssertedIdentity
         }
+    //https://docs.microsoft.com/en-us/windows/win32/extensible-storage-engine/jet-coltyp
+    
+    //MAKE A BACKUP!
+    // esentutl.exe /r sru
+    // esentutl.exe /p
 
+    public class Srum
+    {
+        
+
+        public readonly Dictionary<int, AppInfo> AppMaps;
+        public readonly Dictionary<int, UserInfo> UserMaps;
+        
+        
+        
         public readonly Dictionary<int, AppResourceUseInfo> AppResourceUseInfos;
-
-        public readonly Dictionary<int, IdMapInfo> IdMap;
         public readonly Dictionary<int, NetworkConnection> NetworkConnections;
         public readonly Dictionary<int, NetworkUsage> NetworkUsages;
         public readonly Dictionary<int, PushNotification> PushNotifications;
 
+        /// <summary>
+        /// Maps SIDs to usernames
+        /// </summary>
         public readonly Dictionary<string, string> SidToUser;
+        
+        /// <summary>
+        /// Maps L2ProfileId to Network Profile Names (SSIDs)
+        /// </summary>
+        public readonly Dictionary<int, string> ProfileIndexToSsid;
 
         public Srum(string fileName, string softwareHive)
         {
@@ -784,7 +831,9 @@ namespace SrumData
             }
 
             SidToUser = new Dictionary<string, string>();
+            ProfileIndexToSsid = new Dictionary<int, string>();
 
+                
             if (softwareHive != null)
             {
                 if (File.Exists(softwareHive) == false)
@@ -805,17 +854,59 @@ namespace SrumData
                         SidToUser.Add(registryKey.KeyName, Path.GetFileName(v.ValueData));
                     }
                 }
+                
+                //get network IDs and profileIndexes
+        
+                k = reg.GetKey(@"Microsoft\WlanSvc\Interfaces");
+
+                foreach (var registryKey in k.SubKeys)
+                {
+                    var sk = reg.GetKey(registryKey.KeyPath);
+                    if (sk.SubKeys.All(t => t.KeyName != "Profiles"))
+                    {
+                        continue;
+                    }
+                    
+                    var profileKey = reg.GetKey($"{sk.KeyPath}\\Profiles");
+           
+                    foreach (var pk in profileKey.SubKeys)
+                    {
+                        var pkKey = reg.GetKey(pk.KeyPath);
+                        var profileIndex = pkKey.Values.FirstOrDefault(t => t.ValueName == "ProfileIndex");
+                        if (pkKey.SubKeys.All(t => t.KeyName != "MetaData"))
+                        {
+                            continue;
+                        }
+
+                        {
+                            var meta = reg.GetKey($"{pk.KeyPath}\\MetaData");
+                            var chanHints = meta.Values.SingleOrDefault(t => t.ValueName == "Channel Hints");
+
+                            if (chanHints == null)
+                            {
+                                continue;
+                            }
+
+                            var len = BitConverter.ToInt32(chanHints.ValueDataRaw, 0);
+                            var nwName = Encoding.ASCII.GetString(chanHints.ValueDataRaw, 4, len);
+                            ProfileIndexToSsid.Add(int.Parse(profileIndex.ValueData), nwName);
+                        }
+                    }
+                    
+                }
             }
 
             using var instance = new Instance("pulldata");
             instance.Parameters.Recovery = false;
+         
             instance.Init();
 
             using var session = new Session(instance);
             Api.JetAttachDatabase(session, fileName, AttachDatabaseGrbit.ReadOnly);
             Api.JetOpenDatabase(session, fileName, null, out var dbid, OpenDatabaseGrbit.ReadOnly);
 
-            IdMap = new Dictionary<int, IdMapInfo>();
+            AppMaps = new Dictionary<int, AppInfo>();
+            UserMaps = new Dictionary<int, UserInfo>();
             NetworkUsages = new Dictionary<int, NetworkUsage>();
             AppResourceUseInfos = new Dictionary<int, AppResourceUseInfo>();
             NetworkConnections = new Dictionary<int, NetworkConnection>();
@@ -827,8 +918,6 @@ namespace SrumData
             GetNetworkConnections(session, dbid);
             GetPushNotifications(session, dbid);
 
-
-         
 
             // foreach (string table in Api.GetTableNames(session, dbid))
             // {
@@ -869,10 +958,7 @@ namespace SrumData
                 var ps = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "PayloadSize"));
                 var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
 
-                var app = IdMap[appId.Value];
-                var user = IdMap[userId.Value];
-                
-                var pu = new PushNotification(id.Value, dt.Value, nT.Value, notT.Value, ps.Value, user, app);
+                var pu = new PushNotification(id.Value, dt.Value, nT.Value, notT.Value, ps.Value, userId.Value, appId.Value);
 
                 PushNotifications.Add(pu.Id, pu);
             }
@@ -907,12 +993,15 @@ namespace SrumData
                 var ct = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "ConnectedTime"));
                 var cst = Api.RetrieveColumnAsInt64(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "ConnectStartTime"));
 
-                var app = IdMap[appId.Value];
-                var user = IdMap[userId.Value];
-
                 var cstV = DateTimeOffset.FromFileTime(cst.Value).ToUniversalTime();
 
-                var nu = new NetworkConnection(id.Value, dt.Value, ct.Value, cstV, iL.Value, pf.Value, pId.Value, user, app);
+                var profile = string.Empty;
+                if (ProfileIndexToSsid.ContainsKey(pId.Value))
+                {
+                    profile = ProfileIndexToSsid[pId.Value];
+                }
+                
+                var nu = new NetworkConnection(id.Value, dt.Value, ct.Value, cstV, iL.Value, pf.Value, pId.Value, userId.Value, appId.Value,profile);
 
                 NetworkConnections.Add(nu.Id, nu);
             }
@@ -947,10 +1036,13 @@ namespace SrumData
                 var pId = Api.RetrieveColumnAsInt32(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "L2ProfileId"));
                 var dt = Api.RetrieveColumnAsDateTime(session, networkUsageTable, Api.GetTableColumnid(session, networkUsageTable, "TimeStamp"));
 
-                var app = IdMap[appId.Value];
-                var user = IdMap[userId.Value];
-
-                var nu = new NetworkUsage(id.Value, dt.Value, app, user, br.Value, bs.Value, iL.Value, pf.Value, pId.Value);
+                var profile = string.Empty;
+                if (ProfileIndexToSsid.ContainsKey(pId.Value))
+                {
+                    profile = ProfileIndexToSsid[pId.Value];
+                }
+                
+                var nu = new NetworkUsage(id.Value, dt.Value, appId.Value, userId.Value, br.Value, bs.Value, iL.Value, pf.Value, pId.Value,profile);
 
                 NetworkUsages.Add(nu.Id, nu);
             }
@@ -1002,11 +1094,7 @@ namespace SrumData
                 var fro = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundNumReadOperations"));
                 var fwo = Api.RetrieveColumnAsInt32(session, appResourceUsage, Api.GetTableColumnid(session, appResourceUsage, "ForegroundNumWriteOperations"));
 
-
-                var app = IdMap[appId.Value];
-                var user = IdMap[userId.Value];
-
-                var ari = new AppResourceUseInfo(id.Value, dt.Value, app, user, bbr.Value, bbw.Value, bct.Value, ft.Value, fbr.Value, fbw.Value, fct.Value, bcs.Value, bnf.Value, bro.Value, bwo.Value, fcs.Value, fnf.Value, fro.Value,
+                var ari = new AppResourceUseInfo(id.Value, dt.Value, appId.Value, userId.Value, bbr.Value, bbw.Value, bct.Value, ft.Value, fbr.Value, fbw.Value, fct.Value, bcs.Value, bnf.Value, bro.Value, bwo.Value, fcs.Value, fnf.Value, fro.Value,
                     fwo.Value);
 
                 AppResourceUseInfos.Add(ari.Id, ari);
@@ -1040,35 +1128,39 @@ namespace SrumData
                 var blob = Api.RetrieveColumn(session, idMapTable, Api.GetTableColumnid(session, idMapTable, "IdBlob"));
 
                 var outVal = string.Empty;
+                var userName = string.Empty;
 
                 switch (idType)
                 {
                     case 0:
                     case 1:
-                        if (blob != null)
-                        {
-                            outVal = Encoding.Unicode.GetString(blob).Trim('\0');
-                        }
-
-                        break;
-
                     case 2:
                         if (blob != null)
                         {
                             outVal = Encoding.Unicode.GetString(blob).Trim('\0');
                         }
 
+                        var app = new AppInfo(index.Value, (MapType) idType, outVal);
+                        
+                        AppMaps.Add(app.Index,app);
+                        
                         break;
 
                     case 3:
                         outVal = ConvertHexStringToSidString(blob);
+                        
+                        if (SidToUser.ContainsKey(outVal))
+                        {
+                            userName = SidToUser[outVal];
+                        }
+
+
+                        var user = new UserInfo(index.Value, outVal, userName);
+                        
+                        UserMaps.Add(user.Index,user);
+                        
                         break;
                 }
-
-
-                var mInfo = new IdMapInfo(outVal, (MapType) idType, index.Value);
-
-                IdMap.Add(mInfo.Index, mInfo);
             }
 
             Api.JetResetTableSequential(session, idMapTable
@@ -1511,7 +1603,7 @@ namespace SrumData
 
             const string header = "S";
 
-            if (hex == null)
+            if (hex == null || hex.Length<=8)
             {
                 return string.Empty;
             }
