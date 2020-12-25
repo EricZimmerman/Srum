@@ -185,37 +185,38 @@ namespace SrumData
 
     public class AppResourceUseInfo
     {
-        public long BackgroundBytesRead;
-        public long BackgroundBytesWritten;
+        public long BackgroundBytesRead { get; }
+        public long BackgroundBytesWritten{ get; }
 
-        public int BackgroundContextSwitches;
-        public long BackgroundCycleTime;
-        public int BackgroundNumberOfFlushes;
-        public int BackgroundNumReadOperations;
-        public int BackgroundNumWriteOperations;
-        public long FaceTime;
-        public long ForegroundBytesRead;
-        public long ForegroundBytesWritten;
-        public int ForegroundContextSwitches;
-        public long ForegroundCycleTime;
-        public int ForegroundNumberOfFlushes;
-        public int ForegroundNumReadOperations;
+        public int BackgroundContextSwitches{ get; }
+        public long BackgroundCycleTime{ get; }
+        public int BackgroundNumberOfFlushes{ get; }
+        public int BackgroundNumReadOperations{ get; }
+        public int BackgroundNumWriteOperations{ get; }
+        public long FaceTime{ get; }
+        public long ForegroundBytesRead{ get; }
+        public long ForegroundBytesWritten{ get; }
+        public int ForegroundContextSwitches{ get; }
+        public long ForegroundCycleTime{ get; }
+        public int ForegroundNumberOfFlushes{ get; }
+        public int ForegroundNumReadOperations{ get; }
 
-        public int ForegroundNumWriteOperations;
+        public int ForegroundNumWriteOperations{ get; }
 
-        public int Id;
-        public DateTimeOffset Timestamp;
-        public int UserId;
-        public int AppId;
+        public int Id{ get; }
+        public DateTimeOffset Timestamp{ get; }
+        public int UserId{ get; }
+        public int AppId{ get; }
         
         public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}";
 
-        public AppResourceUseInfo(int id, DateTimeOffset timestamp, int appId, int userId, long backgroundBytesRead, long backgroundBytesWritten, long backgroundCycleTime, long faceTime, long foregroundBytesRead,
+        public AppResourceUseInfo(int id, DateTime timestamp, int appId, int userId, long backgroundBytesRead, long backgroundBytesWritten, long backgroundCycleTime, long faceTime, long foregroundBytesRead,
             long foregroundBytesWritten, long foregroundCycleTime, int backgroundContextSwitches, int backgroundNumberOfFlushes, int backgroundNumReadOperations, int backgroundNumWriteOperations, int foregroundContextSwitches,
             int foregroundNumberOfFlushes, int foregroundNumReadOperations, int foregroundNumWriteOperations)
         {
             Id = id;
-            Timestamp = timestamp;
+            var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+            Timestamp = new DateTimeOffset(tsUtc);
             AppId = appId;
             UserId = userId;
             BackgroundBytesRead = backgroundBytesRead;
@@ -234,6 +235,59 @@ namespace SrumData
             ForegroundNumReadOperations = foregroundNumReadOperations;
             ForegroundNumWriteOperations = foregroundNumWriteOperations;
         }
+    }
+
+    public class EnergyUsage
+    {
+        public EnergyUsage(int id, bool isLt, DateTimeOffset timestamp, int userId, int appId, long configurationHash, long eventTimestamp, long stateTransition, int chargeLevel, int cycleCount, int designedCapacity, int fullChargedCapacity, int activeAcTime, int activeDcTime, int activeDischargeTime, int activeEnergy, int csAcTime, int csDcTime, int csDischargeTime, int csEnergy)
+        {
+            Id = id;
+            IsLt = isLt;
+            Timestamp = timestamp;
+            UserId = userId;
+            AppId = appId;
+            ConfigurationHash = configurationHash;
+            EventTimestamp = eventTimestamp;
+            StateTransition = stateTransition;
+            ChargeLevel = chargeLevel;
+            CycleCount = cycleCount;
+            DesignedCapacity = designedCapacity;
+            FullChargedCapacity = fullChargedCapacity;
+            ActiveAcTime = activeAcTime;
+            ActiveDcTime = activeDcTime;
+            ActiveDischargeTime = activeDischargeTime;
+            ActiveEnergy = activeEnergy;
+            CsAcTime = csAcTime;
+            CsDcTime = csDcTime;
+            CsDischargeTime = csDischargeTime;
+            CsEnergy = csEnergy;
+        }
+
+
+        public int Id { get; }
+        public bool IsLt { get; }
+
+        public DateTimeOffset Timestamp{ get; }
+        public int UserId{ get; }
+        public int AppId{ get; }
+        public long ConfigurationHash{ get; }
+        public long EventTimestamp{ get; }
+        public long StateTransition{ get; }
+
+        public int ChargeLevel{ get; }
+        public int CycleCount{ get; }
+        public int DesignedCapacity{ get; }
+        public int FullChargedCapacity{ get; }
+        public int ActiveAcTime{ get; }
+        public int ActiveDcTime{ get; }
+        public int ActiveDischargeTime{ get; }
+        public int ActiveEnergy{ get; }
+        public int CsAcTime{ get; }
+        public int CsDcTime{ get; }
+        public int CsDischargeTime{ get; }
+        public int CsEnergy{ get; }
+
+
     }
 
     public enum InterfaceType
@@ -807,11 +861,11 @@ namespace SrumData
         public readonly Dictionary<int, UserInfo> UserMaps;
         
         
-        
         public readonly Dictionary<int, AppResourceUseInfo> AppResourceUseInfos;
         public readonly Dictionary<int, NetworkConnection> NetworkConnections;
         public readonly Dictionary<int, NetworkUsage> NetworkUsages;
         public readonly Dictionary<int, PushNotification> PushNotifications;
+        public readonly Dictionary<int, EnergyUsage> EnergyUsages;
 
         /// <summary>
         /// Maps SIDs to usernames
@@ -911,12 +965,14 @@ namespace SrumData
             AppResourceUseInfos = new Dictionary<int, AppResourceUseInfo>();
             NetworkConnections = new Dictionary<int, NetworkConnection>();
             PushNotifications = new Dictionary<int, PushNotification>();
+            EnergyUsages = new Dictionary<int, EnergyUsage>();
 
             BuildIdMap(session, dbid);
             GetNetworkUsageInfo(session, dbid);
             GetApplicationResourceUsage(session, dbid);
             GetNetworkConnections(session, dbid);
             GetPushNotifications(session, dbid);
+            GetEnergyUsages(session, dbid);
 
 
             // foreach (string table in Api.GetTableNames(session, dbid))
@@ -933,6 +989,118 @@ namespace SrumData
             // }
             //
             //
+        }
+
+        /// <summary>
+        ///     {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT and {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+        private void GetEnergyUsages(Session session, JET_DBID dbid)
+        {
+            using var pushTable
+                = new Table(session, dbid, "{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, pushTable, SetTableSequentialGrbit.None);
+            Api.MoveBeforeFirst(session, pushTable);
+
+            while (Api.TryMoveNext(session, pushTable))
+            {
+                // TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT
+                // ActiveAcTime: Long
+                // ActiveDcTime: Long
+                // ActiveDischargeTime: Long
+                // ActiveEnergy: Long
+                // AppId: Long
+                // AutoIncId: Long
+                // ConfigurationHash: LongLong
+                // CsAcTime: Long
+                // CsDcTime: Long
+                // CsDischargeTime: Long
+                // CsEnergy: Long
+                // CycleCount: Long
+                // DesignedCapacity: Long
+                // FullChargedCapacity: Long
+                // TimeStamp: DateTime
+                // UserId: Long
+                
+                
+                var id = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AutoIncId"));
+                var appId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AppId"));
+                var userId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "UserId"));
+               
+                var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
+
+                var designedCapacity = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "DesignedCapacity"));
+                var fullChargedCapacity = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "FullChargedCapacity"));
+                
+                var cycleCount = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "CycleCount"));
+                
+
+                var activeAcTime = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "ActiveAcTime"));
+                var activeDcTime = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "ActiveDcTime"));
+                var activeDischargeTime = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "ActiveDischargeTime"));
+                var activeEnergy = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "ActiveEnergy"));
+                var csAcTime = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "CsAcTime"));
+                var csDcTime = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "CsDcTime"));
+                var csDischargeTime = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "CsDischargeTime"));
+                var csEnergy = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "CsEnergy"));
+                
+               
+                var configurationHash = Api.RetrieveColumnAsInt64(session, pushTable, Api.GetTableColumnid(session, pushTable, "ConfigurationHash"));
+
+                var pu = new EnergyUsage(id.Value,true, dt.Value,userId.Value,appId.Value,configurationHash.Value,-1,-1,-1,cycleCount.Value,designedCapacity.Value,fullChargedCapacity.Value,activeAcTime.Value,activeDcTime.Value,activeDischargeTime.Value,activeEnergy.Value,csAcTime.Value,csDcTime.Value,csDischargeTime.Value,csEnergy.Value);
+
+                EnergyUsages.Add(pu.Id, pu);
+            }
+
+            Api.JetResetTableSequential(session, pushTable
+                , ResetTableSequentialGrbit.None);
+
+            using var pushTable2
+                = new Table(session, dbid, "{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, pushTable2, SetTableSequentialGrbit.None);
+            Api.MoveBeforeFirst(session, pushTable2);
+
+            while (Api.TryMoveNext(session, pushTable2))
+            {
+                // TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}
+                // AppId: Long
+                // AutoIncId: Long
+                // ChargeLevel: Long
+                // ConfigurationHash: LongLong
+                // CycleCount: Long
+                // DesignedCapacity: Long
+                // EventTimestamp: LongLong
+                // FullChargedCapacity: Long
+                // StateTransition: Long
+                // TimeStamp: DateTime
+                // UserId: Long
+           
+
+                var id = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "AutoIncId"));
+                var appId = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "AppId"));
+                var userId = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "UserId"));
+               
+                var dt = Api.RetrieveColumnAsDateTime(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "TimeStamp"));
+
+                var designedCapacity = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "DesignedCapacity"));
+                var fullChargedCapacity = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "FullChargedCapacity"));
+                var stateTransition = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "StateTransition"));
+                var cycleCount = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "CycleCount"));
+                var chargeLevel = Api.RetrieveColumnAsInt32(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "ChargeLevel"));
+              
+                var eventTimestamp = Api.RetrieveColumnAsInt64(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "EventTimestamp"));
+                var configurationHash = Api.RetrieveColumnAsInt64(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "ConfigurationHash"));
+
+                var pu = new EnergyUsage(id.Value,false, dt.Value,userId.Value,appId.Value,configurationHash.Value,eventTimestamp.Value,stateTransition.Value,chargeLevel.Value,cycleCount.Value,designedCapacity.Value,fullChargedCapacity.Value,-1,-1,-1,-1,-1,-1,-1,-1);
+
+                EnergyUsages.Add(pu.Id, pu);
+            }
+
+            Api.JetResetTableSequential(session, pushTable2
+                , ResetTableSequentialGrbit.None);
         }
 
         /// <summary>
@@ -1139,6 +1307,7 @@ namespace SrumData
                         {
                             outVal = Encoding.Unicode.GetString(blob).Trim('\0');
                         }
+                      
 
                         var app = new AppInfo(index.Value, (MapType) idType, outVal);
                         
@@ -1153,6 +1322,7 @@ namespace SrumData
                         {
                             userName = SidToUser[outVal];
                         }
+                      
 
 
                         var user = new UserInfo(index.Value, outVal, userName);
@@ -1658,4 +1828,6 @@ namespace SrumData
             return sid;
         }
     }
+
+   
 }
