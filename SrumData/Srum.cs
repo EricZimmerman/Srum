@@ -237,6 +237,41 @@ namespace SrumData
         }
     }
 
+    public class UnknownD8F
+    {
+        public UnknownD8F(int id, DateTimeOffset timestamp, int userId, int appId, int flags, long startTime, long endTime)
+        {
+            Id = id;
+            Timestamp = timestamp;
+            UserId = userId;
+            AppId = appId;
+            Flags = flags;
+
+            var dts = DateTimeOffset.FromFileTime(startTime);
+            StartTime = dts.ToUniversalTime();
+
+            dts = DateTimeOffset.FromFileTime(endTime);
+            EndTime = dts.ToUniversalTime();
+
+            
+        }
+        
+
+        public int Id { get; }
+        public DateTimeOffset Timestamp{ get; }
+        public int UserId{ get; }
+        public int AppId{ get; }
+
+        public DateTimeOffset StartTime{ get; }
+
+        public DateTimeOffset EndTime{ get; }
+
+        public int Flags{ get; }
+
+        public TimeSpan Duration => EndTime.Subtract(StartTime);
+
+    }
+
     public class EnergyUsage
     {
         public EnergyUsage(int id, bool isLt, DateTimeOffset timestamp, int userId, int appId, long configurationHash, long eventTimestamp, long stateTransition, int chargeLevel, int cycleCount, int designedCapacity, int fullChargedCapacity, int activeAcTime, int activeDcTime, int activeDischargeTime, int activeEnergy, int csAcTime, int csDcTime, int csDischargeTime, int csEnergy)
@@ -247,7 +282,14 @@ namespace SrumData
             UserId = userId;
             AppId = appId;
             ConfigurationHash = configurationHash;
-            EventTimestamp = eventTimestamp;
+
+            if (eventTimestamp > 0)
+            {
+                var dt = DateTimeOffset.FromFileTime(eventTimestamp);
+                EventTimestamp = dt.ToUniversalTime();
+            }
+
+            
             StateTransition = stateTransition;
             ChargeLevel = chargeLevel;
             CycleCount = cycleCount;
@@ -271,7 +313,7 @@ namespace SrumData
         public int UserId{ get; }
         public int AppId{ get; }
         public long ConfigurationHash{ get; }
-        public long EventTimestamp{ get; }
+        public DateTimeOffset? EventTimestamp{ get; }
         public long StateTransition{ get; }
 
         public int ChargeLevel{ get; }
@@ -866,6 +908,7 @@ namespace SrumData
         public readonly Dictionary<int, NetworkUsage> NetworkUsages;
         public readonly Dictionary<int, PushNotification> PushNotifications;
         public readonly Dictionary<int, EnergyUsage> EnergyUsages;
+        public readonly Dictionary<int, UnknownD8F> UnknownD8Fs;
 
         /// <summary>
         /// Maps SIDs to usernames
@@ -886,7 +929,6 @@ namespace SrumData
 
             SidToUser = new Dictionary<string, string>();
             ProfileIndexToSsid = new Dictionary<int, string>();
-
                 
             if (softwareHive != null)
             {
@@ -966,6 +1008,7 @@ namespace SrumData
             NetworkConnections = new Dictionary<int, NetworkConnection>();
             PushNotifications = new Dictionary<int, PushNotification>();
             EnergyUsages = new Dictionary<int, EnergyUsage>();
+            UnknownD8Fs = new Dictionary<int, UnknownD8F>();
 
             BuildIdMap(session, dbid);
             GetNetworkUsageInfo(session, dbid);
@@ -973,22 +1016,75 @@ namespace SrumData
             GetNetworkConnections(session, dbid);
             GetPushNotifications(session, dbid);
             GetEnergyUsages(session, dbid);
+            GetUnknownD8Fs(session, dbid);
+          
+        }
 
+        /// <summary>
+        ///     {7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+        private void GetUnknownD8Fs(Session session, JET_DBID dbid)
+        {
+            using var pushTable
+                = new Table(session, dbid, "{7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F}", OpenTableGrbit.ReadOnly);
 
-            // foreach (string table in Api.GetTableNames(session, dbid))
-            // {
-            //     Console.WriteLine($"TABLE: {table}");
-            //
-            //     foreach (ColumnInfo column in Api.GetTableColumns(session, dbid, table))
-            //     {
-            //         Console.WriteLine("\t{0}: {1}", column.Name,column.Coltyp);
-            //         
-            //        
-            //     }
-            //     Console.WriteLine("------------------------------------");
-            // }
-            //
-            //
+            Api.JetSetTableSequential(session, pushTable, SetTableSequentialGrbit.None);
+            Api.MoveBeforeFirst(session, pushTable);
+
+            while (Api.TryMoveNext(session, pushTable))
+            {
+
+                var id = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AutoIncId"));
+                var appId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AppId"));
+                var userId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "UserId"));
+             
+                var flags = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "Flags"));
+
+                var endTime = Api.RetrieveColumnAsInt64(session, pushTable, Api.GetTableColumnid(session, pushTable, "EndTime"));
+                var startTime = Api.RetrieveColumnAsInt64(session, pushTable, Api.GetTableColumnid(session, pushTable, "StartTime"));
+                
+                var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
+
+                var pu = new UnknownD8F(id.Value, dt.Value,userId.Value,appId.Value,flags.Value,startTime.Value,endTime.Value);
+
+                UnknownD8Fs.Add(pu.Id, pu);
+            }
+
+            Api.JetResetTableSequential(session, pushTable
+                , ResetTableSequentialGrbit.None);
+        }
+
+        public static void DumpTableInfo(string fileName)
+        {
+            if (File.Exists(fileName) == false)
+            {
+                throw new FileNotFoundException($"'{fileName}' does not exist!");
+            }
+            using var instance = new Instance("pulldata");
+            instance.Parameters.Recovery = false;
+         
+            instance.Init();
+
+            using var session = new Session(instance);
+            Api.JetAttachDatabase(session, fileName, AttachDatabaseGrbit.ReadOnly);
+            Api.JetOpenDatabase(session, fileName, null, out var dbid, OpenDatabaseGrbit.ReadOnly);
+
+            foreach (string table in Api.GetTableNames(session, dbid))
+            {
+                Console.WriteLine($"TABLE: {table}");
+            
+                foreach (ColumnInfo column in Api.GetTableColumns(session, dbid, table))
+                {
+                    Console.WriteLine("\t{0}: {1}", column.Name,column.Coltyp);
+                    
+                   
+                }
+                Console.WriteLine("------------------------------------");
+            }
+            
+            
         }
 
         /// <summary>
