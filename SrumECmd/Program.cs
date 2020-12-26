@@ -34,11 +34,13 @@ namespace SrumECmd
         public bool Trace { get; set; }
     }
 
-    class Program
+    internal class Program
     {
         private static Logger _logger;
 
         private static FluentCommandLineParser<ApplicationArguments> _fluentCommandLineParser;
+
+        private static readonly string BaseDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         public static bool IsAdministrator()
         {
@@ -46,8 +48,6 @@ namespace SrumECmd
             var principal = new WindowsPrincipal(identity);
             return principal.IsInRole(WindowsBuiltInRole.Administrator);
         }
-
-        private static readonly string BaseDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
         private static void SetupNLog()
         {
@@ -73,7 +73,7 @@ namespace SrumECmd
             LogManager.Configuration = config;
         }
 
-        static void Main(string[] args)
+        private static void Main(string[] args)
         {
             ExceptionlessClient.Default.Startup("wPXTiiouhEbK0s19lCgjiDThpfrW0ODU8RskdPEk");
 
@@ -120,7 +120,6 @@ namespace SrumECmd
                 .WithDescription("Show trace information during processing\r\n").SetDefault(false);
 
 
-
             var header =
                 $"SrumECmd version {Assembly.GetExecutingAssembly().GetName().Version}" +
                 "\r\n\r\nAuthor: Eric Zimmerman (saericzimmerman@gmail.com)" +
@@ -130,7 +129,6 @@ namespace SrumECmd
             var footer = @"Examples: SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" -r ""C:\Temp\SOFTWARE"" --csv ""C:\Temp\"" " + "\r\n\t " +
                          @" SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" --csv ""c:\temp""" + "\r\n\t " +
                          @" SrumECmd.exe -d ""C:\Temp"" --csv ""c:\temp""" + "\r\n\t " +
-
                          "\r\n\t" +
                          "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
 
@@ -155,8 +153,8 @@ namespace SrumECmd
                 return;
             }
 
-            if (UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.FileDb) &&
-                UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.Directory))
+            if (_fluentCommandLineParser.Object.FileDb.IsNullOrEmpty() &&
+                _fluentCommandLineParser.Object.Directory.IsNullOrEmpty())
             {
                 _fluentCommandLineParser.HelpOption.ShowHelp(_fluentCommandLineParser.Options);
 
@@ -164,21 +162,21 @@ namespace SrumECmd
                 return;
             }
 
-            if (UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.FileDb) == false &&
+            if (_fluentCommandLineParser.Object.FileDb.IsNullOrEmpty() == false &&
                 !File.Exists(_fluentCommandLineParser.Object.FileDb))
             {
                 _logger.Warn($"File '{_fluentCommandLineParser.Object.FileDb}' not found. Exiting");
                 return;
             }
 
-            if (UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.Directory) == false &&
+            if (_fluentCommandLineParser.Object.Directory.IsNullOrEmpty() == false &&
                 !Directory.Exists(_fluentCommandLineParser.Object.Directory))
             {
                 _logger.Warn($"Directory '{_fluentCommandLineParser.Object.Directory}' not found. Exiting");
                 return;
             }
 
-            if (UsefulExtension.IsNullOrEmpty(_fluentCommandLineParser.Object.CsvDirectory) )
+            if (_fluentCommandLineParser.Object.CsvDirectory.IsNullOrEmpty())
             {
                 _fluentCommandLineParser.HelpOption.ShowHelp(_fluentCommandLineParser.Options);
 
@@ -192,7 +190,7 @@ namespace SrumECmd
 
             if (IsAdministrator() == false)
             {
-                _logger.Fatal($"Warning: Administrator privileges not found!\r\n");
+                _logger.Fatal("Warning: Administrator privileges not found!\r\n");
             }
 
             if (_fluentCommandLineParser.Object.Debug)
@@ -227,7 +225,7 @@ namespace SrumECmd
                     {
                         return false;
                     }
-                    
+
                     if (fsei.FileName.ToUpperInvariant() == "SRUDB.DAT")
                     {
                         return true;
@@ -252,7 +250,7 @@ namespace SrumECmd
 
                 if (_fluentCommandLineParser.Object.FileDb.IsNullOrEmpty())
                 {
-                    _logger.Warn($"Did not locate any files named 'SRUDB.dat'! Exiting");
+                    _logger.Warn("Did not locate any files named 'SRUDB.dat'! Exiting");
                     return;
                 }
 
@@ -265,7 +263,7 @@ namespace SrumECmd
                     {
                         return false;
                     }
-                    
+
                     if (fsei.FileName.ToUpperInvariant() == "SOFTWARE")
                     {
                         return true;
@@ -277,7 +275,7 @@ namespace SrumECmd
                 f.RecursionFilter = entryInfo => !entryInfo.IsMountPoint && !entryInfo.IsSymbolicLink;
 
                 f.ErrorFilter = (errorCode, errorMessage, pathProcessed) => true;
-                
+
                 files2 =
                     Directory.EnumerateFileSystemEntries(_fluentCommandLineParser.Object.Directory, dirEnumOptions, f);
 
@@ -285,7 +283,7 @@ namespace SrumECmd
 
                 if (_fluentCommandLineParser.Object.FileReg.IsNullOrEmpty())
                 {
-                    _logger.Warn($"Did not locate any files named 'SOFTWARE'! Registry data will not be extracted");
+                    _logger.Warn("Did not locate any files named 'SOFTWARE'! Registry data will not be extracted");
                 }
                 else
                 {
@@ -293,7 +291,6 @@ namespace SrumECmd
                 }
 
                 Console.WriteLine();
-
             }
 
             try
@@ -301,7 +298,7 @@ namespace SrumECmd
                 _logger.Info($"Processing '{_fluentCommandLineParser.Object.FileDb}'...");
                 sr = new Srum(_fluentCommandLineParser.Object.FileDb, _fluentCommandLineParser.Object.FileReg);
 
-                _logger.Warn($"\r\nProcessing complete!\r\n");
+                _logger.Warn("\r\nProcessing complete!\r\n");
                 _logger.Info($"{"Energy Usage count:".PadRight(30)} {sr.EnergyUsages.Count:N0}");
                 _logger.Info($"{"Unknown 312 count:".PadRight(30)} {sr.Unknown312s.Count:N0}");
                 _logger.Info($"{"Unknown D8F count:".PadRight(30)} {sr.UnknownD8Fs.Count:N0}");
@@ -429,7 +426,7 @@ namespace SrumECmd
                         $"{t.EndTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
                     foo.Map(t => t.StartTime).ConvertUsing(t =>
                         $"{t.StartTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                    
+
                     _csvWriter.Configuration.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<UnknownD8F>();
                     _csvWriter.NextRecord();
@@ -459,7 +456,7 @@ namespace SrumECmd
                     var foo = _csvWriter.Configuration.AutoMap<AppResourceUseInfo>();
                     foo.Map(t => t.Timestamp).ConvertUsing(t =>
                         $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                    
+
                     _csvWriter.Configuration.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<AppResourceUseInfo>();
                     _csvWriter.NextRecord();
@@ -521,7 +518,7 @@ namespace SrumECmd
                     var foo = _csvWriter.Configuration.AutoMap<NetworkUsage>();
                     foo.Map(t => t.Timestamp).ConvertUsing(t =>
                         $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                    
+
                     _csvWriter.Configuration.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<NetworkUsage>();
                     _csvWriter.NextRecord();
@@ -551,7 +548,7 @@ namespace SrumECmd
                     var foo = _csvWriter.Configuration.AutoMap<PushNotification>();
                     foo.Map(t => t.Timestamp).ConvertUsing(t =>
                         $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                    
+
                     _csvWriter.Configuration.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<PushNotification>();
                     _csvWriter.NextRecord();
@@ -566,15 +563,13 @@ namespace SrumECmd
                     _logger.Error($"Error exporting 'PushNotification' data! Error: {e.Message}");
                 }
 
-                
+
                 sw.Stop();
 
                 _logger.Debug("");
 
                 _logger.Error(
                     $"Procesing completed in {sw.Elapsed.TotalSeconds:N4} seconds\r\n");
-
-
             }
         }
     }
