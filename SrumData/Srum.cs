@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Runtime.Serialization;
 using System.Text;
 using Microsoft.Isam.Esent.Interop;
 using Registry;
@@ -239,10 +240,11 @@ namespace SrumData
 
     public class UnknownD8F
     {
-        public UnknownD8F(int id, DateTimeOffset timestamp, int userId, int appId, int flags, long startTime, long endTime)
+        public UnknownD8F(int id, DateTime timestamp, int userId, int appId, int flags, long startTime, long endTime)
         {
             Id = id;
-            Timestamp = timestamp;
+            var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+            Timestamp = new DateTimeOffset(tsUtc);
             UserId = userId;
             AppId = appId;
             Flags = flags;
@@ -252,9 +254,9 @@ namespace SrumData
 
             dts = DateTimeOffset.FromFileTime(endTime);
             EndTime = dts.ToUniversalTime();
-
-            
         }
+
+        public static string TableName => "{7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F}";
         
 
         public int Id { get; }
@@ -269,6 +271,80 @@ namespace SrumData
         public int Flags{ get; }
 
         public TimeSpan Duration => EndTime.Subtract(StartTime);
+
+    }
+
+    public class Unknown312
+    {
+        public Unknown312(int id, DateTime timestamp, int userId, int appId, int durationMs, long endTime)
+        {
+            Id = id;
+            UserId = userId;
+            AppId = appId;
+            DurationMs = durationMs;
+            var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
+            Timestamp = new DateTimeOffset(tsUtc);
+
+            var dts = DateTimeOffset.FromFileTime(endTime);
+            EndTime = dts.ToUniversalTime();
+
+        }
+        // TABLE: {5C8CF1C7-7257-4F13-B223-970EF5939312}
+            // AppId: Long
+        // AudioInS: Long
+        // AudioInTimeline: 15
+        // AudioOutS: Long
+        // AudioOutTimeline: 15
+            // AutoIncId: Long
+        // CompDirtiedS: Long
+        // CompDirtiedTimeline: 15
+        // CompPropagatedS: Long
+        // CompPropagatedTimeline: 15
+        // CompRenderedS: Long
+        // CompRenderedTimeline: 15
+        // CpuTimeline: 15
+        // Cycles: 15
+        // CyclesAttr: 15
+        // CyclesAttrBreakdown: 15
+        // CyclesBreakdown: 15
+        // CyclesWOB: 15
+        // CyclesWOBBreakdown: 15
+        // DiskRaw: 15
+        // DiskTimeline: 15
+        // DisplayRequiredS: Long
+        // DisplayRequiredTimeline: 15
+        // DurationMS: Long
+        // EndTime: 15
+        // Flags: Long
+        // InFocusS: Long
+        // InFocusTimeline: 15
+        // KeyboardInputS: Long
+        // KeyboardInputTimeline: 15
+        // MBBBytesRaw: 15
+        // MBBTailRaw: 15
+        // MBBTimeline: 15
+        // MouseInputS: Long
+        // NetworkBytesRaw: 15
+        // NetworkTailRaw: 15
+        // NetworkTimeline: 15
+        // PSMForegroundS: Long
+        // SpanMS: Long
+        // TimelineEnd: Long
+            //     TimeStamp: DateTime
+            //     UserId: Long
+        // UserInputS: Long
+        // UserInputTimeline: 15
+
+        public static string TableName => "{5C8CF1C7-7257-4F13-B223-970EF5939312}";
+
+        public int Id { get; }
+        public DateTimeOffset Timestamp{ get; }
+        public int UserId{ get; }
+        public int AppId{ get; }
+
+        public DateTimeOffset EndTime{ get; }
+
+        public int DurationMs {get;}
 
     }
 
@@ -304,6 +380,8 @@ namespace SrumData
             CsDischargeTime = csDischargeTime;
             CsEnergy = csEnergy;
         }
+
+        public static string TableName => "{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}|{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT";
 
 
         public int Id { get; }
@@ -892,8 +970,8 @@ namespace SrumData
     //https://docs.microsoft.com/en-us/windows/win32/extensible-storage-engine/jet-coltyp
     
     //MAKE A BACKUP!
-    // esentutl.exe /r sru
-    // esentutl.exe /p
+    // esentutl.exe /r sru /i
+    // esentutl.exe /p SRUDB.dat
 
     public class Srum
     {
@@ -909,6 +987,7 @@ namespace SrumData
         public readonly Dictionary<int, PushNotification> PushNotifications;
         public readonly Dictionary<int, EnergyUsage> EnergyUsages;
         public readonly Dictionary<int, UnknownD8F> UnknownD8Fs;
+        public readonly Dictionary<int, Unknown312> Unknown312s;
 
         /// <summary>
         /// Maps SIDs to usernames
@@ -993,13 +1072,20 @@ namespace SrumData
             }
 
             using var instance = new Instance("pulldata");
-            instance.Parameters.Recovery = false;
-         
+             instance.Parameters.LogFileDirectory = Path.GetDirectoryName(fileName);
+             instance.Parameters.SystemDirectory = Path.GetDirectoryName(fileName);
+             instance.Parameters.BaseName = "SRU";
+             instance.Parameters.TempDirectory = Path.GetDirectoryName(fileName);
+
+            
+
             instance.Init();
 
             using var session = new Session(instance);
             Api.JetAttachDatabase(session, fileName, AttachDatabaseGrbit.ReadOnly);
             Api.JetOpenDatabase(session, fileName, null, out var dbid, OpenDatabaseGrbit.ReadOnly);
+
+            
 
             AppMaps = new Dictionary<int, AppInfo>();
             UserMaps = new Dictionary<int, UserInfo>();
@@ -1009,6 +1095,7 @@ namespace SrumData
             PushNotifications = new Dictionary<int, PushNotification>();
             EnergyUsages = new Dictionary<int, EnergyUsage>();
             UnknownD8Fs = new Dictionary<int, UnknownD8F>();
+            Unknown312s = new Dictionary<int, Unknown312>();
 
             BuildIdMap(session, dbid);
             GetNetworkUsageInfo(session, dbid);
@@ -1017,6 +1104,7 @@ namespace SrumData
             GetPushNotifications(session, dbid);
             GetEnergyUsages(session, dbid);
             GetUnknownD8Fs(session, dbid);
+            GetUnknown312s(session, dbid);
           
         }
 
@@ -1050,6 +1138,41 @@ namespace SrumData
                 var pu = new UnknownD8F(id.Value, dt.Value,userId.Value,appId.Value,flags.Value,startTime.Value,endTime.Value);
 
                 UnknownD8Fs.Add(pu.Id, pu);
+            }
+
+            Api.JetResetTableSequential(session, pushTable
+                , ResetTableSequentialGrbit.None);
+        }
+
+        /// <summary>
+        ///     {5C8CF1C7-7257-4F13-B223-970EF5939312}
+        /// </summary>
+        /// <param name="session"></param>
+        /// <param name="dbid"></param>
+        private void GetUnknown312s(Session session, JET_DBID dbid)
+        {
+            using var pushTable
+                = new Table(session, dbid, "{5C8CF1C7-7257-4F13-B223-970EF5939312}", OpenTableGrbit.ReadOnly);
+
+            Api.JetSetTableSequential(session, pushTable, SetTableSequentialGrbit.None);
+            Api.MoveBeforeFirst(session, pushTable);
+
+            while (Api.TryMoveNext(session, pushTable))
+            {
+
+                var id = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AutoIncId"));
+                var appId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "AppId"));
+                var userId = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "UserId"));
+             
+                var dur = Api.RetrieveColumnAsInt32(session, pushTable, Api.GetTableColumnid(session, pushTable, "DurationMS"));
+
+                var endTime = Api.RetrieveColumnAsInt64(session, pushTable, Api.GetTableColumnid(session, pushTable, "EndTime"));
+                
+                var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
+
+                var pu = new   Unknown312(id.Value, dt.Value,userId.Value,appId.Value,dur.Value,endTime.Value);
+
+                Unknown312s.Add(pu.Id, pu);
             }
 
             Api.JetResetTableSequential(session, pushTable
