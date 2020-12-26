@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "SrumECmd": {
+      "commandName": "Project",
+      "commandLineArgs": "-d D:\\OneDrive\\HPSpectreSrum\\3 --csv c:\\temp"
+    }
+  }
+}

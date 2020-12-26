@@ -2,8 +2,31 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>netstandard2.0;net461;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net461</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
+    <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
+    <AssemblyVersion>0.5.0.0</AssemblyVersion>
+    <FileVersion>0.5.0.0</FileVersion>
+    <Version>0.5.0.0</Version>
+    <Authors>Eric R. Zimmerman</Authors>
+    <Description>Dumps SRUM data to CSV</Description>
+    <Copyright>Eric R. Zimmerman 2021</Copyright>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="AlphaFS" Version="2.2.6" />
+    <PackageReference Include="Costura.Fody" Version="4.1.0" />
+    <PackageReference Include="CsvHelper" Version="17.0.1" />
+    <PackageReference Include="Exceptionless" Version="4.5.0" />
+    <PackageReference Include="FluentCommandLineParser" Version="1.4.3" />
+    <PackageReference Include="NLog" Version="4.7.6" />
+    <PackageReference Include="ServiceStack.Text" Version="5.10.2" />
+    <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\SrumData\SrumData.csproj" />
+  </ItemGroup>
 
 </Project>

@@ -81,17 +81,31 @@ namespace SrumData
     public class NetworkUsage
     {
        
+        public int Id {get;}
+        public DateTimeOffset Timestamp {get;}
+
+        public string ExeInfo {get; internal set;}
+        public string ExeInfoDescription {get; internal set;}
+        
+        public DateTimeOffset? ExeTimestamp {get; internal set;}
+
+        public SidTypeEnum SidType {get; internal set;}
+        public string Sid {get; internal set;}
+        public string UserName {get; internal set;}
+
+        public int UserId {get;}
+        public int AppId {get;}
+
         public long BytesReceived {get;}
         public long BytesSent {get;}
-        public int Id {get;}
+        
         public long InterfaceLuid {get;}
         public InterfaceType InterfaceType {get;}
         public int L2ProfileFlags {get;}
         public int L2ProfileId {get;}
         public string ProfileName {get;}
-        public DateTimeOffset Timestamp {get;}
-        public int UserId {get;}
-        public int AppId {get;}
+     
+
         
         public static string TableName => "{973F5D5C-1D90-4944-BE8E-24B94231A174}";
 
@@ -110,6 +124,8 @@ namespace SrumData
             L2ProfileId = l2ProfileId;
             ProfileName = profileName;
             InterfaceType = Srum.GetInterfaceTypeFromLuid(interfaceLuid);
+
+     
         }
 
         public override string ToString()
@@ -121,15 +137,27 @@ namespace SrumData
 
     public class PushNotification
     {
-       
         public int Id {get;}
-        public int NetworkType {get;}
-        public int NotificationType {get;}
-        public int PayloadSize {get;}
         public DateTimeOffset Timestamp {get;}
+
+        public string ExeInfo {get; internal set;}
+        public string ExeInfoDescription {get; internal set;}
+        
+        public DateTimeOffset? ExeTimestamp {get; internal set;}
+
+        public SidTypeEnum SidType {get; internal set;}
+        public string Sid {get; internal set;}
+        public string UserName {get; internal set;}
 
         public int UserId {get;}
         public int AppId {get;}
+       
+        public int NetworkType {get;}
+        public int NotificationType {get;}
+        public int PayloadSize {get;}
+
+
+
 
         public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA86}";
         
@@ -150,19 +178,32 @@ namespace SrumData
 
     public class NetworkConnection
     {
-       
+        public int Id {get;}
+        public DateTimeOffset Timestamp {get;}
+
+        public string ExeInfo {get; internal set;}
+        public string ExeInfoDescription {get; internal set;}
+        
+        public DateTimeOffset? ExeTimestamp {get; internal set;}
+
+        public SidTypeEnum SidType {get; internal set;}
+        public string Sid {get; internal set;}
+        public string UserName {get; internal set;}
+
+        public int UserId {get;}
+        public int AppId {get;}
+
         public int ConnectedTime {get;}
         public DateTimeOffset ConnectStartTime {get;}
-        public int Id {get;}
+        
         public long InterfaceLuid {get;}
 
         public InterfaceType InterfaceType {get;}
         public int L2ProfileFlags {get;}
         public int L2ProfileId {get;}
         public string ProfileName {get;}
-        public DateTimeOffset Timestamp {get;}
-        public int UserId {get;}
-        public int AppId {get;}
+
+
         
         public static string TableName => "{DD6636C4-8929-4683-974E-22C046A43763}";
 
@@ -186,6 +227,21 @@ namespace SrumData
 
     public class AppResourceUseInfo
     {
+        public int Id {get;}
+        public DateTimeOffset Timestamp {get;}
+
+        public string ExeInfo {get; internal set;}
+        public string ExeInfoDescription {get; internal set;}
+        
+        public DateTimeOffset? ExeTimestamp {get; internal set;}
+
+        public SidTypeEnum SidType {get; internal set;}
+        public string Sid {get; internal set;}
+        public string UserName {get; internal set;}
+
+        public int UserId {get;}
+        public int AppId {get;}
+
         public long BackgroundBytesRead { get; }
         public long BackgroundBytesWritten{ get; }
 
@@ -204,10 +260,6 @@ namespace SrumData
 
         public int ForegroundNumWriteOperations{ get; }
 
-        public int Id{ get; }
-        public DateTimeOffset Timestamp{ get; }
-        public int UserId{ get; }
-        public int AppId{ get; }
         
         public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}";
 
@@ -259,10 +311,20 @@ namespace SrumData
         public static string TableName => "{7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F}";
         
 
-        public int Id { get; }
-        public DateTimeOffset Timestamp{ get; }
-        public int UserId{ get; }
-        public int AppId{ get; }
+        public int Id {get;}
+        public DateTimeOffset Timestamp {get;}
+        public int UserId {get;}
+        public int AppId {get;}
+
+        public string ExeInfo {get; internal set;}
+        public string ExeInfoDescription {get; internal set;}
+        
+        public DateTimeOffset? ExeTimestamp {get; internal set;}
+
+        public SidTypeEnum SidType {get; internal set;}
+        public string Sid {get; internal set;}
+        public string UserName {get; internal set;}
+
 
         public DateTimeOffset StartTime{ get; }
 
@@ -339,6 +401,16 @@ namespace SrumData
 
         public int Id { get; }
         public DateTimeOffset Timestamp{ get; }
+
+        public string ExeInfo {get; internal set;}
+        public string ExeInfoDescription {get; internal set;}
+        
+        public DateTimeOffset? ExeTimestamp {get; internal set;}
+
+        public SidTypeEnum SidType {get; internal set;}
+        public string Sid {get; internal set;}
+        public string UserName {get; internal set;}
+
         public int UserId{ get; }
         public int AppId{ get; }
 
@@ -381,15 +453,25 @@ namespace SrumData
             CsEnergy = csEnergy;
         }
 
-        public static string TableName => "{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}|{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT";
+        public static string TableName => "{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}_{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT";
 
 
-        public int Id { get; }
+        public int Id {get;}
+        public DateTimeOffset Timestamp {get;}
+        public string ExeInfo {get; internal set;}
+        public string ExeInfoDescription {get; internal set;}
+        
+        public DateTimeOffset? ExeTimestamp {get; internal set;}
+
+        public SidTypeEnum SidType {get; internal set;}
+        public string Sid {get; internal set;}
+        public string UserName {get; internal set;}
+
+        public int UserId {get;}
+        public int AppId {get;}
         public bool IsLt { get; }
 
-        public DateTimeOffset Timestamp{ get; }
-        public int UserId{ get; }
-        public int AppId{ get; }
+      
         public long ConfigurationHash{ get; }
         public DateTimeOffset? EventTimestamp{ get; }
         public long StateTransition{ get; }
@@ -1137,6 +1219,13 @@ namespace SrumData
 
                 var pu = new UnknownD8F(id.Value, dt.Value,userId.Value,appId.Value,flags.Value,startTime.Value,endTime.Value);
 
+                pu.ExeInfo = AppMaps[appId.Value].ExeInfo;
+                pu.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
+                pu.ExeTimestamp = AppMaps[appId.Value].Timestamp;
+                pu.Sid = UserMaps[userId.Value].Sid;
+                pu.SidType = UserMaps[userId.Value].SidType;
+                pu.UserName = UserMaps[userId.Value].UserName;
+
                 UnknownD8Fs.Add(pu.Id, pu);
             }
 
@@ -1171,6 +1260,13 @@ namespace SrumData
                 var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
 
                 var pu = new   Unknown312(id.Value, dt.Value,userId.Value,appId.Value,dur.Value,endTime.Value);
+       
+                pu.ExeInfo = AppMaps[appId.Value].ExeInfo;
+                pu.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
+                pu.ExeTimestamp = AppMaps[appId.Value].Timestamp;
+                pu.Sid = UserMaps[userId.Value].Sid;
+                pu.SidType = UserMaps[userId.Value].SidType;
+                pu.UserName = UserMaps[userId.Value].UserName;
 
                 Unknown312s.Add(pu.Id, pu);
             }
@@ -1347,6 +1443,13 @@ namespace SrumData
 
                 var pu = new PushNotification(id.Value, dt.Value, nT.Value, notT.Value, ps.Value, userId.Value, appId.Value);
 
+                pu.ExeInfo = AppMaps[appId.Value].ExeInfo;
+                pu.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
+                pu.ExeTimestamp = AppMaps[appId.Value].Timestamp;
+                pu.Sid = UserMaps[userId.Value].Sid;
+                pu.SidType = UserMaps[userId.Value].SidType;
+                pu.UserName = UserMaps[userId.Value].UserName;
+
                 PushNotifications.Add(pu.Id, pu);
             }
 
@@ -1390,6 +1493,13 @@ namespace SrumData
                 
                 var nu = new NetworkConnection(id.Value, dt.Value, ct.Value, cstV, iL.Value, pf.Value, pId.Value, userId.Value, appId.Value,profile);
 
+                nu.ExeInfo = AppMaps[appId.Value].ExeInfo;
+                nu.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
+                nu.ExeTimestamp = AppMaps[appId.Value].Timestamp;
+                nu.Sid = UserMaps[userId.Value].Sid;
+                nu.SidType = UserMaps[userId.Value].SidType;
+                nu.UserName = UserMaps[userId.Value].UserName;
+
                 NetworkConnections.Add(nu.Id, nu);
             }
 
@@ -1430,6 +1540,15 @@ namespace SrumData
                 }
                 
                 var nu = new NetworkUsage(id.Value, dt.Value, appId.Value, userId.Value, br.Value, bs.Value, iL.Value, pf.Value, pId.Value,profile);
+
+                nu.ExeInfo = AppMaps[appId.Value].ExeInfo;
+                nu.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
+                nu.ExeTimestamp = AppMaps[appId.Value].Timestamp;
+                nu.Sid = UserMaps[userId.Value].Sid;
+                nu.SidType = UserMaps[userId.Value].SidType;
+                nu.UserName = UserMaps[userId.Value].UserName;
+
+
 
                 NetworkUsages.Add(nu.Id, nu);
             }
@@ -1483,6 +1602,13 @@ namespace SrumData
 
                 var ari = new AppResourceUseInfo(id.Value, dt.Value, appId.Value, userId.Value, bbr.Value, bbw.Value, bct.Value, ft.Value, fbr.Value, fbw.Value, fct.Value, bcs.Value, bnf.Value, bro.Value, bwo.Value, fcs.Value, fnf.Value, fro.Value,
                     fwo.Value);
+
+                ari.ExeInfo = AppMaps[appId.Value].ExeInfo;
+                ari.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
+                ari.ExeTimestamp = AppMaps[appId.Value].Timestamp;
+                ari.Sid = UserMaps[userId.Value].Sid;
+                ari.SidType = UserMaps[userId.Value].SidType;
+                ari.UserName = UserMaps[userId.Value].UserName;
 
                 AppResourceUseInfos.Add(ari.Id, ari);
             }
