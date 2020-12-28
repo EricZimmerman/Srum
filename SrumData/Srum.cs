@@ -1191,7 +1191,6 @@ namespace SrumData
             UnknownD8Fs = new Dictionary<int, UnknownD8F>();
             Unknown312s = new Dictionary<int, Unknown312>();
 
-
             logger.Debug("Building ID Maps");
             BuildIdMap(session, dbid);
 
@@ -1205,10 +1204,7 @@ namespace SrumData
                 logger.Warn($"Error processing Network Usage info ({NetworkUsage.TableName}): {e.Message}");
             }
             
-
             logger.Debug("Getting ApplicationResourceUsage ");
-         
-
             try
             {
                 GetApplicationResourceUsage(session, dbid);
@@ -1219,8 +1215,6 @@ namespace SrumData
             }
 
             logger.Debug("Getting NetworkConnections");
-           
-
             try
             {
                 GetNetworkConnections(session, dbid);
@@ -1231,8 +1225,6 @@ namespace SrumData
             }
 
             logger.Debug("Getting PushNotifications");
-         
-
             try
             {
                 GetPushNotifications(session, dbid);
@@ -1243,8 +1235,6 @@ namespace SrumData
             }
 
             logger.Debug("Getting EnergyUsages(and LT)");
-           
-
             try
             {
                 GetEnergyUsages(session, dbid);
@@ -1255,8 +1245,6 @@ namespace SrumData
             }
 
             logger.Debug("Getting UnknownD8Fs");
-           
-
             try
             {
                 GetUnknownD8Fs(session, dbid);
@@ -1267,8 +1255,6 @@ namespace SrumData
             }
 
             logger.Debug("Getting Unknown312s");
-         
-         
             try
             {
                 GetUnknown312s(session, dbid);
