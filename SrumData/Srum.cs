@@ -7,7 +7,9 @@ using System.Linq;
 using System.Runtime.Serialization;
 using System.Text;
 using Microsoft.Isam.Esent.Interop;
+using NLog;
 using Registry;
+using ServiceStack.Text;
 
 namespace SrumData
 {
@@ -1090,9 +1092,12 @@ namespace SrumData
 
             SidToUser = new Dictionary<string, string>();
             ProfileIndexToSsid = new Dictionary<int, string>();
+
+            var logger = LogManager.GetLogger("Main");
                 
             if (softwareHive != null)
             {
+                logger.Debug("Processing SOFTWARE Registry hive");
                 if (File.Exists(softwareHive) == false)
                 {
                     throw new FileNotFoundException($"'{softwareHive}' does not exist!");
@@ -1151,24 +1156,31 @@ namespace SrumData
                     }
                     
                 }
+
+                logger.Debug(SidToUser.Dump());
+                logger.Debug(ProfileIndexToSsid.Dump());
             }
 
+            logger.Debug("Processing SOFTWARE Registry hive");
+
+
+            logger.Debug("Initiating instance");
             using var instance = new Instance("pulldata");
              instance.Parameters.LogFileDirectory = Path.GetDirectoryName(fileName);
              instance.Parameters.SystemDirectory = Path.GetDirectoryName(fileName);
              instance.Parameters.BaseName = "SRU";
              instance.Parameters.TempDirectory = Path.GetDirectoryName(fileName);
 
-            
+             //instance.Parameters.Recovery = false;            
 
             instance.Init();
 
+            logger.Debug("Setting up session");
             using var session = new Session(instance);
             Api.JetAttachDatabase(session, fileName, AttachDatabaseGrbit.ReadOnly);
             Api.JetOpenDatabase(session, fileName, null, out var dbid, OpenDatabaseGrbit.ReadOnly);
-
             
-
+            logger.Debug("Initiating dictionaries");
             AppMaps = new Dictionary<int, AppInfo>();
             UserMaps = new Dictionary<int, UserInfo>();
             NetworkUsages = new Dictionary<int, NetworkUsage>();
@@ -1179,15 +1191,93 @@ namespace SrumData
             UnknownD8Fs = new Dictionary<int, UnknownD8F>();
             Unknown312s = new Dictionary<int, Unknown312>();
 
+
+            logger.Debug("Building ID Maps");
             BuildIdMap(session, dbid);
-            GetNetworkUsageInfo(session, dbid);
-            GetApplicationResourceUsage(session, dbid);
-            GetNetworkConnections(session, dbid);
-            GetPushNotifications(session, dbid);
-            GetEnergyUsages(session, dbid);
-            GetUnknownD8Fs(session, dbid);
-            GetUnknown312s(session, dbid);
-          
+
+            logger.Debug("Getting NetworkUsageInfo");
+            try
+            {
+                GetNetworkUsageInfo(session, dbid);
+            }
+            catch (Exception e)
+            {
+                logger.Warn($"Error processing Network Usage info ({NetworkUsage.TableName}): {e.Message}");
+            }
+            
+
+            logger.Debug("Getting ApplicationResourceUsage ");
+         
+
+            try
+            {
+                GetApplicationResourceUsage(session, dbid);
+            }
+            catch (Exception e)
+            {
+                logger.Warn($"Error processing App Resource Use info ({AppResourceUseInfo.TableName}): {e.Message}");
+            }
+
+            logger.Debug("Getting NetworkConnections");
+           
+
+            try
+            {
+                GetNetworkConnections(session, dbid);
+            }
+            catch (Exception e)
+            {
+                logger.Warn($"Error processing Network Connection info ({NetworkConnection.TableName}): {e.Message}");
+            }
+
+            logger.Debug("Getting PushNotifications");
+         
+
+            try
+            {
+                GetPushNotifications(session, dbid);
+            }
+            catch (Exception e)
+            {
+                logger.Warn($"Error processing Push Notification info ({PushNotification.TableName}): {e.Message}");
+            }
+
+            logger.Debug("Getting EnergyUsages(and LT)");
+           
+
+            try
+            {
+                GetEnergyUsages(session, dbid);
+            }
+            catch (Exception e)
+            {
+                logger.Warn($"Error processing Enery Usage info ({EnergyUsage.TableName}): {e.Message}");
+            }
+
+            logger.Debug("Getting UnknownD8Fs");
+           
+
+            try
+            {
+                GetUnknownD8Fs(session, dbid);
+            }
+            catch (Exception e)
+            {
+                logger.Warn($"Error processing Unknown D8F info ({UnknownD8F.TableName}): {e.Message}");
+            }
+
+            logger.Debug("Getting Unknown312s");
+         
+         
+            try
+            {
+                GetUnknown312s(session, dbid);
+            }
+            catch (Exception e)
+            {
+                logger.Warn($"Error processing Unknown 312 info ({Unknown312.TableName}): {e.Message}");
+            }
+
         }
 
         /// <summary>
@@ -1464,6 +1554,9 @@ namespace SrumData
         /// <param name="dbid"></param>
         private void GetNetworkConnections(Session session, JET_DBID dbid)
         {
+
+            
+
             using var networkUsageTable = new Table(session, dbid, "{DD6636C4-8929-4683-974E-22C046A43763}", OpenTableGrbit.ReadOnly);
 
             Api.JetSetTableSequential(session, networkUsageTable, SetTableSequentialGrbit.None);
