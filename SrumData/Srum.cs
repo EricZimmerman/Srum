@@ -1121,41 +1121,47 @@ namespace SrumData
         
                 k = reg.GetKey(@"Microsoft\WlanSvc\Interfaces");
 
-                foreach (var registryKey in k.SubKeys)
-                {
-                    var sk = reg.GetKey(registryKey.KeyPath);
-                    if (sk.SubKeys.All(t => t.KeyName != "Profiles"))
+                if (k != null)
+                { 
+                    foreach (var registryKey in k.SubKeys)
                     {
-                        continue;
-                    }
-                    
-                    var profileKey = reg.GetKey($"{sk.KeyPath}\\Profiles");
-           
-                    foreach (var pk in profileKey.SubKeys)
-                    {
-                        var pkKey = reg.GetKey(pk.KeyPath);
-                        var profileIndex = pkKey.Values.FirstOrDefault(t => t.ValueName == "ProfileIndex");
-                        if (pkKey.SubKeys.All(t => t.KeyName != "MetaData"))
+                        var sk = reg.GetKey(registryKey.KeyPath);
+                        if (sk.SubKeys.All(t => t.KeyName != "Profiles"))
                         {
                             continue;
                         }
-
+                                        
+                        var profileKey = reg.GetKey($"{sk.KeyPath}\\Profiles");
+                               
+                        foreach (var pk in profileKey.SubKeys)
                         {
-                            var meta = reg.GetKey($"{pk.KeyPath}\\MetaData");
-                            var chanHints = meta.Values.SingleOrDefault(t => t.ValueName == "Channel Hints");
-
-                            if (chanHints == null)
+                            var pkKey = reg.GetKey(pk.KeyPath);
+                            var profileIndex = pkKey.Values.FirstOrDefault(t => t.ValueName == "ProfileIndex");
+                            if (pkKey.SubKeys.All(t => t.KeyName != "MetaData"))
                             {
                                 continue;
                             }
 
-                            var len = BitConverter.ToInt32(chanHints.ValueDataRaw, 0);
-                            var nwName = Encoding.ASCII.GetString(chanHints.ValueDataRaw, 4, len);
-                            ProfileIndexToSsid.Add(int.Parse(profileIndex.ValueData), nwName);
+                            {
+                                var meta = reg.GetKey($"{pk.KeyPath}\\MetaData");
+                                var chanHints = meta.Values.SingleOrDefault(t => t.ValueName == "Channel Hints");
+
+                                if (chanHints == null)
+                                {
+                                    continue;
+                                }
+
+                                var len = BitConverter.ToInt32(chanHints.ValueDataRaw, 0);
+                                var nwName = Encoding.ASCII.GetString(chanHints.ValueDataRaw, 4, len);
+                                ProfileIndexToSsid.Add(int.Parse(profileIndex.ValueData), nwName);
+                            }
                         }
+                                        
                     }
-                    
                 }
+
+
+               
 
                 logger.Debug(SidToUser.Dump());
                 logger.Debug(ProfileIndexToSsid.Dump());
