@@ -1,6 +1,6 @@
 # SRUM parser
 
-    SrumECmd version 0.5.0.0
+    SrumECmd version 0.5.0.1
 
     Author: Eric Zimmerman (saericzimmerman@gmail.com)
     https://github.com/EricZimmerman/Srum
@@ -45,7 +45,15 @@ When you run SrumECmd, you will likely encounter an error message that states th
 Follow these steps to repair the SRUDB.dat so you can run SrumECmd.exe again. First, follow the steps SrumECmd provides:
 1. Make a copy of the files within the .\SRU directory
 2. Ensure the .\SRU directory itself is not Read Only. This can be done by right clicking on the directory itself, Properties, and unchecking Read Only if it is checked
+
+![SRUFolderReadOnlyExample](Pictures/SRUFolderReadOnlyExample.gif)
 3. Open a PowerShell session as an Administrator in the directory where your copied files reside
-4. Execute this command within the PowerShell Admin session: esentutl.exe /r sru /i
-5. Execute this command within the PowerShell Admin session: esentutl.exe /p SRUDB.dat
+4. Execute this command within the PowerShell Admin session: 
+    esentutl.exe /r sru /i
+![SRUDBFirstRepairCommand](Pictures/SRUDBFirstRepairCommand.gif)
+
+5. Execute this command within the PowerShell Admin session: 
+    esentutl.exe /p SRUDB.dat
+![SRUDBSecondRepairCommand](Pictures/SRUDBSecondRepairCommand.gif)
+
 6. Try running SrumECmd again against the location where these repaired files reside
