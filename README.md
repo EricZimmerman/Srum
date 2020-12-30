@@ -66,3 +66,7 @@ Follow these steps to repair the SRUDB.dat so you can run SrumECmd.exe again. Fi
 6. Try running SrumECmd again against the location where these repaired files reside:
 
 ![SrumECmdParsingSuccessExample](Pictures/SrumECmdParsingSuccessExample.png)
+
+7. Examine output in Timeline Explorer!
+
+![SrumECmdCSVOutput](Pictures/SrumECmdCSVOutput.jpg)
