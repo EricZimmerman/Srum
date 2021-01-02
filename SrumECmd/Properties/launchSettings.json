@@ -2,7 +2,7 @@
   "profiles": {
     "SrumECmd": {
       "commandName": "Project",
-      "commandLineArgs": "-d C:\\Temp\\SRU --csv c:\\temp"
+      "commandLineArgs": "-d C:\\Temp\\500sru --csv c:\\temp"
     }
   }
 }

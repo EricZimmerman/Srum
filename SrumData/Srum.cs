@@ -458,7 +458,7 @@ namespace SrumData
         public static string TableName => "{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}_{FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT";
 
 
-        public int Id {get;}
+        public int Id {get; set; }
         public DateTimeOffset Timestamp {get;}
         public string ExeInfo {get; internal set;}
         public string ExeInfoDescription {get; internal set;}
@@ -1401,6 +1401,8 @@ namespace SrumData
             Api.JetSetTableSequential(session, pushTable, SetTableSequentialGrbit.None);
             Api.MoveBeforeFirst(session, pushTable);
 
+
+            var lastSeen = 0;
             while (Api.TryMoveNext(session, pushTable))
             {
                 // TABLE: {FEE4E14F-02A9-4550-B5CE-5FA2DA202E37}LT
@@ -1447,8 +1449,10 @@ namespace SrumData
                 var configurationHash = Api.RetrieveColumnAsInt64(session, pushTable, Api.GetTableColumnid(session, pushTable, "ConfigurationHash"));
 
                 var pu = new EnergyUsage(id.Value,true, dt.Value,userId.Value,appId.Value,configurationHash.Value,-1,-1,-1,cycleCount.Value,designedCapacity.Value,fullChargedCapacity.Value,activeAcTime.Value,activeDcTime.Value,activeDischargeTime.Value,activeEnergy.Value,csAcTime.Value,csDcTime.Value,csDischargeTime.Value,csEnergy.Value);
-
+                
                 EnergyUsages.Add(pu.Id, pu);
+
+                lastSeen = pu.Id;
             }
 
             Api.JetResetTableSequential(session, pushTable
@@ -1492,6 +1496,18 @@ namespace SrumData
                 var configurationHash = Api.RetrieveColumnAsInt64(session, pushTable2, Api.GetTableColumnid(session, pushTable2, "ConfigurationHash"));
 
                 var pu = new EnergyUsage(id.Value,false, dt.Value,userId.Value,appId.Value,configurationHash.Value,eventTimestamp.Value,stateTransition.Value,chargeLevel.Value,cycleCount.Value,designedCapacity.Value,fullChargedCapacity.Value,-1,-1,-1,-1,-1,-1,-1,-1);
+
+                if (EnergyUsages.ContainsKey(pu.Id))
+                {
+                    while (EnergyUsages.ContainsKey(lastSeen))
+                    {
+                        lastSeen+=1;    
+                    }
+
+                    var logger = LogManager.GetLogger("Main");
+                    logger.Warn($"Id '{pu.Id}' in use from LT table. Incrementing by '{lastSeen}'");
+                    pu.Id += lastSeen;
+                }
 
                 EnergyUsages.Add(pu.Id, pu);
             }
