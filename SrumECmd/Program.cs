@@ -569,7 +569,7 @@ namespace SrumECmd
                 _logger.Debug("");
 
                 _logger.Error(
-                    $"Procesing completed in {sw.Elapsed.TotalSeconds:N4} seconds\r\n");
+                    $"Processing completed in {sw.Elapsed.TotalSeconds:N4} seconds\r\n");
             }
         }
     }

@@ -5,9 +5,9 @@
     <TargetFrameworks>net461</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
     <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
-    <AssemblyVersion>0.5.0.0</AssemblyVersion>
-    <FileVersion>0.5.0.0</FileVersion>
-    <Version>0.5.0.0</Version>
+    <AssemblyVersion>0.5.0.2</AssemblyVersion>
+    <FileVersion>0.5.0.2</FileVersion>
+    <Version>0.5.0.2</Version>
     <Authors>Eric R. Zimmerman</Authors>
     <Description>Dumps SRUM data to CSV</Description>
     <Copyright>Eric R. Zimmerman 2021</Copyright>
