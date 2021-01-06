@@ -29,7 +29,7 @@
 
 When you run SrumECmd, you will likely encounter an error message that states the file is dirty. 
 
-    Command line: -d M:\SrumECmdTest\tout -k --csv M:\Forensics\SrumECmdTest\mout\SystemActivity
+    Command line: -d M:\Forensics\SrumECmdTest\tout -k --csv M:\Forensics\SrumECmdTest\mout\SystemActivity
     Found SRUM database file 'M:\Forensics\SrumECmdTest\tout\C\Windows\System32\SRU\SRUDB.dat'!
     Found SOFTWARE hive 'M:\Forensics\SrumECmdTest\tout\C\Windows\System32\config\software'!
     Processing 'M:\Forensics\SrumECmdTest\tout\C\Windows\System32\SRU\SRUDB.dat'...
