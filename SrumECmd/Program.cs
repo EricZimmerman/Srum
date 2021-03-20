@@ -354,13 +354,13 @@ namespace SrumECmd
 
                     _csvWriter = new CsvWriter(_swCsv, CultureInfo.InvariantCulture);
 
-                    var foo = _csvWriter.Configuration.AutoMap<EnergyUsage>();
-                    foo.Map(t => t.Timestamp).ConvertUsing(t =>
-                        $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                    foo.Map(t => t.EventTimestamp).ConvertUsing(t =>
-                        $"{t.EventTimestamp?.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
+                    var foo = _csvWriter.Context.AutoMap<EnergyUsage>();
+                    foo.Map(t => t.Timestamp).Convert(t =>
+                        $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                    foo.Map(t => t.EventTimestamp).Convert(t =>
+                        $"{t.Value.EventTimestamp?.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
 
-                    _csvWriter.Configuration.RegisterClassMap(foo);
+                    _csvWriter.Context.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<EnergyUsage>();
                     _csvWriter.NextRecord();
 
@@ -387,13 +387,13 @@ namespace SrumECmd
 
                     _csvWriter = new CsvWriter(_swCsv, CultureInfo.InvariantCulture);
 
-                    var foo = _csvWriter.Configuration.AutoMap<Unknown312>();
-                    foo.Map(t => t.Timestamp).ConvertUsing(t =>
-                        $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                    foo.Map(t => t.EndTime).ConvertUsing(t =>
-                        $"{t.EndTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
+                    var foo = _csvWriter.Context.AutoMap<Unknown312>();
+                    foo.Map(t => t.Timestamp).Convert(t =>
+                        $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                    foo.Map(t => t.EndTime).Convert(t =>
+                        $"{t.Value.EndTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
 
-                    _csvWriter.Configuration.RegisterClassMap(foo);
+                    _csvWriter.Context.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<Unknown312>();
                     _csvWriter.NextRecord();
 
@@ -419,15 +419,15 @@ namespace SrumECmd
 
                     _csvWriter = new CsvWriter(_swCsv, CultureInfo.InvariantCulture);
 
-                    var foo = _csvWriter.Configuration.AutoMap<UnknownD8F>();
-                    foo.Map(t => t.Timestamp).ConvertUsing(t =>
-                        $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                    foo.Map(t => t.EndTime).ConvertUsing(t =>
-                        $"{t.EndTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
-                    foo.Map(t => t.StartTime).ConvertUsing(t =>
-                        $"{t.StartTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
+                    var foo = _csvWriter.Context.AutoMap<UnknownD8F>();
+                    foo.Map(t => t.Timestamp).Convert(t =>
+                        $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                    foo.Map(t => t.EndTime).Convert(t =>
+                        $"{t.Value.EndTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
+                    foo.Map(t => t.StartTime).Convert(t =>
+                        $"{t.Value.StartTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
 
-                    _csvWriter.Configuration.RegisterClassMap(foo);
+                    _csvWriter.Context.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<UnknownD8F>();
                     _csvWriter.NextRecord();
 
@@ -453,11 +453,11 @@ namespace SrumECmd
 
                     _csvWriter = new CsvWriter(_swCsv, CultureInfo.InvariantCulture);
 
-                    var foo = _csvWriter.Configuration.AutoMap<AppResourceUseInfo>();
-                    foo.Map(t => t.Timestamp).ConvertUsing(t =>
-                        $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                    var foo = _csvWriter.Context.AutoMap<AppResourceUseInfo>();
+                    foo.Map(t => t.Timestamp).Convert(t =>
+                        $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
 
-                    _csvWriter.Configuration.RegisterClassMap(foo);
+                    _csvWriter.Context.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<AppResourceUseInfo>();
                     _csvWriter.NextRecord();
 
@@ -483,13 +483,13 @@ namespace SrumECmd
 
                     _csvWriter = new CsvWriter(_swCsv, CultureInfo.InvariantCulture);
 
-                    var foo = _csvWriter.Configuration.AutoMap<NetworkConnection>();
-                    foo.Map(t => t.Timestamp).ConvertUsing(t =>
-                        $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                    foo.Map(t => t.ConnectStartTime).ConvertUsing(t =>
-                        $"{t.ConnectStartTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
+                    var foo = _csvWriter.Context.AutoMap<NetworkConnection>();
+                    foo.Map(t => t.Timestamp).Convert(t =>
+                        $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                    foo.Map(t => t.ConnectStartTime).Convert(t =>
+                        $"{t.Value.ConnectStartTime.ToString(_fluentCommandLineParser.Object.DateTimeFormat)}");
 
-                    _csvWriter.Configuration.RegisterClassMap(foo);
+                    _csvWriter.Context.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<NetworkConnection>();
                     _csvWriter.NextRecord();
 
@@ -515,11 +515,11 @@ namespace SrumECmd
 
                     _csvWriter = new CsvWriter(_swCsv, CultureInfo.InvariantCulture);
 
-                    var foo = _csvWriter.Configuration.AutoMap<NetworkUsage>();
-                    foo.Map(t => t.Timestamp).ConvertUsing(t =>
-                        $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                    var foo = _csvWriter.Context.AutoMap<NetworkUsage>();
+                    foo.Map(t => t.Timestamp).Convert(t =>
+                        $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
 
-                    _csvWriter.Configuration.RegisterClassMap(foo);
+                    _csvWriter.Context.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<NetworkUsage>();
                     _csvWriter.NextRecord();
 
@@ -545,11 +545,11 @@ namespace SrumECmd
 
                     _csvWriter = new CsvWriter(_swCsv, CultureInfo.InvariantCulture);
 
-                    var foo = _csvWriter.Configuration.AutoMap<PushNotification>();
-                    foo.Map(t => t.Timestamp).ConvertUsing(t =>
-                        $"{t.Timestamp:yyyy-MM-dd HH:mm:ss}");
+                    var foo = _csvWriter.Context.AutoMap<PushNotification>();
+                    foo.Map(t => t.Timestamp).Convert(t =>
+                        $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
 
-                    _csvWriter.Configuration.RegisterClassMap(foo);
+                    _csvWriter.Context.RegisterClassMap(foo);
                     _csvWriter.WriteHeader<PushNotification>();
                     _csvWriter.NextRecord();
 
