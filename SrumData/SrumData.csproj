@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
  
   <PropertyGroup>
-    <TargetFrameworks>netstandard2.0;net461</TargetFrameworks>
+    <TargetFrameworks>netstandard2.0;net461;net5.0</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
   </PropertyGroup>
  
@@ -12,8 +12,8 @@
 
   <ItemGroup>
     <PackageReference Include="Microsoft.Database.ManagedEsent" Version="2.0.1" />
-    <PackageReference Include="Registry" Version="1.2.0.2" />
-    <PackageReference Include="ServiceStack.Text" Version="5.10.4" />
+    <PackageReference Include="Registry" Version="1.2.0.3" />
+    <PackageReference Include="ServiceStack.Text" Version="5.11.0" />
   </ItemGroup>
 
 </Project>

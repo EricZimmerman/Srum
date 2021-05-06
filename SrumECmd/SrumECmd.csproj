@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net461</TargetFrameworks>
+    <TargetFrameworks>net461;net5.0</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
     <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
     <AssemblyVersion>0.5.0.2</AssemblyVersion>
@@ -21,15 +21,15 @@
 
   <ItemGroup>
     <PackageReference Include="AlphaFS" Version="2.2.6" />
-    <PackageReference Include="Costura.Fody" Version="5.1.0">
+    <PackageReference Include="Costura.Fody" Version="5.3.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
     </PackageReference>
-    <PackageReference Include="CsvHelper" Version="26.0.1" />
+    <PackageReference Include="CsvHelper" Version="27.0.2" />
     <PackageReference Include="Exceptionless" Version="4.6.2" />
     <PackageReference Include="FluentCommandLineParser" Version="1.4.3" />
-    <PackageReference Include="NLog" Version="4.7.8" />
-    <PackageReference Include="ServiceStack.Text" Version="5.10.4" />
+    <PackageReference Include="NLog" Version="4.7.9" />
+    <PackageReference Include="ServiceStack.Text" Version="5.11.0" />
     <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
   </ItemGroup>
 
