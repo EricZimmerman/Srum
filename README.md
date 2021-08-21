@@ -1,4 +1,8 @@
-# SRUM parser
+# SrumECmd
+
+A SRUM parser!
+
+## Command Line Interface
 
     SrumECmd version 0.5.0.1
 
@@ -25,6 +29,9 @@
 
     Either -f or -d is required. Exiting
 
+## Documentation
+
+
 ## Repairing the SRUDB.dat
 
 When you run SrumECmd, you will likely encounter an error message that states the file is dirty. 
@@ -42,10 +49,10 @@ When you run SrumECmd, you will likely encounter an error message that states th
 
     Total execution time: 6.5490 seconds
     
-Follow these steps to repair the SRUDB.dat so you can run SrumECmd.exe again. First, follow the steps SrumECmd provides:
-1. Make a copy of the files within the .\SRU directory
+Follow these steps to repair the `SRUDB.dat` so you can run SrumECmd.exe again. First, follow the steps SrumECmd provides:
+1. Make a copy of the files within the `.\SRU` directory
 
-2. Ensure the .\SRU directory itself is not Read Only. This can be done by right clicking on the directory itself, Properties, and unchecking Read Only if it is checked:
+2. Ensure the `.\SRU` directory itself is not Read Only. This can be done by right clicking on the directory itself, Properties, and unchecking Read Only if it is checked:
 
 ![SRUFolderReadOnlyExample](Pictures/SRUFolderReadOnlyExample.gif)
 
@@ -53,13 +60,13 @@ Follow these steps to repair the SRUDB.dat so you can run SrumECmd.exe again. Fi
 
 4. Execute this command within the PowerShell Admin session: 
 
-    esentutl.exe /r sru /i
+    `esentutl.exe /r sru /i`
 
 ![SRUDBFirstRepairCommand](Pictures/SRUDBFirstRepairCommand.gif)
 
 5. Execute this command within the PowerShell Admin session: 
 
-    esentutl.exe /p SRUDB.dat
+    `esentutl.exe /p SRUDB.dat`
     
 ![SRUDBSecondRepairCommand](Pictures/SRUDBSecondRepairCommand.gif)
 
@@ -70,3 +77,11 @@ Follow these steps to repair the SRUDB.dat so you can run SrumECmd.exe again. Fi
 7. Examine output in Timeline Explorer!
 
 ![SrumECmdCSVOutput](Pictures/SrumECmdCSVOutput.jpg)
+
+# Download Eric Zimmerman's Tools
+
+All of Eric Zimmerman's tools can be downloaded [here](https://ericzimmerman.github.io/#!index.md). Use the [Get-ZimmermanTools](https://f001.backblazeb2.com/file/EricZimmermanTools/Get-ZimmermanTools.zip) PowerShell script to automate the download and updating of the EZ Tools suite. Additionally, you can automate each of these tools using [KAPE](https://www.kroll.com/en/services/cyber-risk/incident-response-litigation-support/kroll-artifact-parser-extractor-kape)!
+
+# Special Thanks
+
+Open Source Development funding and support provided by the following contributors: [SANS Institute](http://sans.org/) and [SANS DFIR](http://dfir.sans.org/).
