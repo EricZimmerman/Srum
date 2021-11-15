@@ -2,7 +2,7 @@
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFrameworks>net461;net5.0</TargetFrameworks>
+    <TargetFrameworks>net461;net5.0;net6.0</TargetFrameworks>
     <LangVersion>8.0</LangVersion>
     <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
     <AssemblyVersion>0.5.0.2</AssemblyVersion>
