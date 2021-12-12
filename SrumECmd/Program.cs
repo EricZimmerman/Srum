@@ -148,7 +148,7 @@ namespace SrumECmd
 
             _rootCommand.Description = header + "\r\n\r\n" +footer;
 
-            _rootCommand.Handler = CommandHandler.Create<string,string,string,string,string,bool,bool>(DoWork);
+            _rootCommand.Handler = System.CommandLine.NamingConventionBinder.CommandHandler.Create<string,string,string,string,string,bool,bool>(DoWork);
             
             await _rootCommand.InvokeAsync(args);
         }
