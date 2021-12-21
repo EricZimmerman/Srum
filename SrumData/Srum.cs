@@ -1226,7 +1226,7 @@ public class Srum
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing Enery Usage info ({EnergyUsage.TableName}): {e.Message}");
+            logger.Warn($"Error processing Energy Usage info ({EnergyUsage.TableName}): {e.Message}");
         }
 
         logger.Debug("Getting UnknownD8Fs");
