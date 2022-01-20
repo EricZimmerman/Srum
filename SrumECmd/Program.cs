@@ -17,6 +17,9 @@ using Exceptionless;
 using NLog;
 using NLog.Config;
 using NLog.Targets;
+using Serilog;
+using Serilog.Core;
+using Serilog.Events;
 using ServiceStack;
 using SrumData;
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
@@ -40,8 +43,6 @@ public class ApplicationArguments
 
 internal class Program
 {
-    private static Logger _logger;
-
     private static readonly string BaseDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
     private static readonly string Header =
@@ -50,11 +51,12 @@ internal class Program
         "\r\nhttps://github.com/EricZimmerman/Srum";
 
 
-    private static readonly string Footer = @"Examples: SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" -r ""C:\Temp\SOFTWARE"" --csv ""C:\Temp\"" " + "\r\n\t " +
-                                            @" SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" --csv ""c:\temp""" + "\r\n\t " +
-                                            @" SrumECmd.exe -d ""C:\Temp"" --csv ""c:\temp""" + "\r\n\t " +
-                                            "\r\n\t" +
-                                            "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
+    private static readonly string Footer =
+        @"Examples: SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" -r ""C:\Temp\SOFTWARE"" --csv ""C:\Temp\"" " + "\r\n\t " +
+        @" SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" --csv ""c:\temp""" + "\r\n\t " +
+        @" SrumECmd.exe -d ""C:\Temp"" --csv ""c:\temp""" + "\r\n\t " +
+        "\r\n\t" +
+        "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
 
     private static string[] _args;
     private static RootCommand _rootCommand;
@@ -103,8 +105,6 @@ internal class Program
 
         SetupNLog();
 
-        _logger = LogManager.GetCurrentClassLogger();
-
         var csvOption = new Option<string>(
             "--csv",
             "Directory to save CSV formatted results to. Be sure to include the full path in double quotes")
@@ -152,6 +152,28 @@ internal class Program
 
     private static void DoWork(string f, string r, string d, string csv, string dt, bool debug, bool trace)
     {
+        var levelSwitch = new LoggingLevelSwitch();
+
+        var template = "{Message:lj}{NewLine}{Exception}";
+
+        if (debug)
+        {
+            levelSwitch.MinimumLevel = LogEventLevel.Debug;
+            template = "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+        }
+
+        if (trace)
+        {
+            levelSwitch.MinimumLevel = LogEventLevel.Verbose;
+            template = "[{Timestamp:HH:mm:ss.fff} {Level:u3}] {Message:lj}{NewLine}{Exception}";
+        }
+
+        var conf = new LoggerConfiguration()
+            .WriteTo.Console(outputTemplate: template)
+            .MinimumLevel.ControlledBy(levelSwitch);
+
+        Log.Logger = conf.CreateLogger();
+
         if (f.IsNullOrEmpty() && d.IsNullOrEmpty())
         {
             var helpBld = new HelpBuilder(LocalizationResources.Instance, Console.WindowWidth);
@@ -160,20 +182,20 @@ internal class Program
 
             helpBld.Write(hc);
 
-            _logger.Warn("Either -f or -d is required. Exiting\r\n");
+            Log.Warning("Either -f or -d is required. Exiting\r\n");
             return;
         }
 
 
         if (f.IsNullOrEmpty() == false && !File.Exists(f))
         {
-            _logger.Warn($"File '{f}' not found. Exiting");
+            Log.Warning("File '{File}' not found. Exiting", f);
             return;
         }
 
         if (d.IsNullOrEmpty() == false && !Directory.Exists(d))
         {
-            _logger.Warn($"Directory '{d}' not found. Exiting");
+            Log.Warning("Directory '{D}' not found. Exiting", d);
             return;
         }
 
@@ -185,30 +207,18 @@ internal class Program
 
             helpBld.Write(hc);
 
-            _logger.Warn("--csv is required. Exiting\r\n");
+            Log.Warning("--csv is required. Exiting\r\n");
             return;
         }
 
-        _logger.Info(Header);
-        _logger.Info("");
-        _logger.Info($"Command line: {string.Join(" ", _args)}\r\n");
+        Log.Information("{Header}", Header);
+        Console.WriteLine();
+        Log.Information("Command line: {Args}\r\n", string.Join(" ", _args));
 
         if (IsAdministrator() == false)
         {
-            _logger.Fatal("Warning: Administrator privileges not found!\r\n");
+            Log.Fatal("Warning: Administrator privileges not found!\r\n");
         }
-
-        if (debug)
-        {
-            LogManager.Configuration.LoggingRules.First().EnableLoggingForLevel(LogLevel.Debug);
-        }
-
-        if (trace)
-        {
-            LogManager.Configuration.LoggingRules.First().EnableLoggingForLevel(LogLevel.Trace);
-        }
-
-        LogManager.ReconfigExistingLoggers();
 
         var sw = new Stopwatch();
         sw.Start();
@@ -240,9 +250,10 @@ internal class Program
 
             ilter.ErrorFilter = (errorCode, errorMessage, pathProcessed) => true;
 
-            const DirectoryEnumerationOptions dirEnumOptions = DirectoryEnumerationOptions.Files | DirectoryEnumerationOptions.Recursive |
-                                                               DirectoryEnumerationOptions.SkipReparsePoints | DirectoryEnumerationOptions.ContinueOnException |
-                                                               DirectoryEnumerationOptions.BasicSearch;
+            const DirectoryEnumerationOptions dirEnumOptions =
+                DirectoryEnumerationOptions.Files | DirectoryEnumerationOptions.Recursive |
+                DirectoryEnumerationOptions.SkipReparsePoints | DirectoryEnumerationOptions.ContinueOnException |
+                DirectoryEnumerationOptions.BasicSearch;
 
             var files2 =
                 Directory.EnumerateFileSystemEntries(d, dirEnumOptions, ilter);
@@ -251,11 +262,11 @@ internal class Program
 
             if (f.IsNullOrEmpty())
             {
-                _logger.Warn("Did not locate any files named 'SRUDB.dat'! Exiting");
+                Log.Warning("Did not locate any files named 'SRUDB.dat'! Exiting");
                 return;
             }
 
-            _logger.Info($"Found SRUM database file '{f}'!");
+            Log.Information("Found SRUM database file '{F}'!", f);
 
             ilter = new DirectoryEnumerationFilters();
             ilter.InclusionFilter = fsei =>
@@ -284,11 +295,11 @@ internal class Program
 
             if (r.IsNullOrEmpty())
             {
-                _logger.Warn("Did not locate any files named 'SOFTWARE'! Registry data will not be extracted");
+                Log.Warning("Did not locate any files named 'SOFTWARE'! Registry data will not be extracted");
             }
             else
             {
-                _logger.Info($"Found SOFTWARE hive '{r}'!");
+                Log.Information("Found SOFTWARE hive '{R}'!", r);
             }
 
             Console.WriteLine();
@@ -296,24 +307,34 @@ internal class Program
 
         try
         {
-            _logger.Info($"Processing '{f}'...");
+            Log.Information("Processing '{F}'...", f);
             sr = new Srum(f, r);
 
-            _logger.Warn("\r\nProcessing complete!\r\n");
-            _logger.Info($"{"Energy Usage count:".PadRight(30)} {sr.EnergyUsages.Count:N0}");
-            _logger.Info($"{"Unknown 312 count:".PadRight(30)} {sr.Unknown312s.Count:N0}");
-            _logger.Info($"{"Unknown D8F count:".PadRight(30)} {sr.UnknownD8Fs.Count:N0}");
-            _logger.Info($"{"App Resource Usage count:".PadRight(30)} {sr.AppResourceUseInfos.Count:N0}");
-            _logger.Info($"{"Network Connection count:".PadRight(30)} {sr.NetworkConnections.Count:N0}");
-            _logger.Info($"{"Network Usage count:".PadRight(30)} {sr.NetworkUsages.Count:N0}");
-            _logger.Info($"{"Push Notification count:".PadRight(30)} {sr.PushNotifications.Count:N0}");
+            Log.Warning("\r\nProcessing complete!\r\n");
+            Log.Information("{EnergyUse} {EnergyUsagesCount:N0}", "Energy Usage count:".PadRight(30),
+                sr.EnergyUsages.Count);
+            Log.Information("{Unknown312s} {Unknown312sCount:N0}", "Unknown 312 count:".PadRight(30),
+                sr.Unknown312s.Count);
+            Log.Information("{UnknownD8Fs} {UnknownD8FsCount:N0}", "Unknown D8F count:".PadRight(30),
+                sr.UnknownD8Fs.Count);
+            Log.Information("{AppResourceUseInfos} {AppResourceUseInfosCount:N0}",
+                "App Resource Usage count:".PadRight(30), sr.AppResourceUseInfos.Count);
+            Log.Information("{NetworkConnections} {NetworkConnectionsCount:N0}",
+                "Network Connection count:".PadRight(30), sr.NetworkConnections.Count);
+            Log.Information("{NetworkUsages} {NetworkUsagesCount}", "Network Usage count:".PadRight(30),
+                sr.NetworkUsages.Count);
+            Log.Information("{PushNotifications} {PushNotificationsCount:N0}", "Push Notification count:".PadRight(30),
+                sr.PushNotifications.Count);
             Console.WriteLine();
         }
         catch (Exception e)
         {
-            _logger.Error($"Error processing file! Message: {e.Message}.\r\n\r\nThis almost always means the database is dirty and must be repaired. This can be verified by running 'esentutl.exe /mh SRUDB.dat' and examining the 'State' property");
+            Log.Error(e,
+                "Error processing file! Message: {Message}.\r\n\r\nThis almost always means the database is dirty and must be repaired. This can be verified by running 'esentutl.exe /mh SRUDB.dat' and examining the 'State' property",
+                e.Message);
             Console.WriteLine();
-            _logger.Info("If the database is dirty, **make a copy of your files**, ensure all files in the directory are not Read-only, open a PowerShell session as an admin, and repair by using the following commands (change directories to the location of SRUDB.dat first):\r\n\r\n'esentutl.exe /r sru /i'\r\n'esentutl.exe /p SRUDB.dat'\r\n\r\n");
+            Log.Information(
+                "If the database is dirty, **make a copy of your files**, ensure all files in the directory are not Read-only, open a PowerShell session as an admin, and repair by using the following commands (change directories to the location of SRUDB.dat first):\r\n\r\n'esentutl.exe /r sru /i'\r\n'esentutl.exe /p SRUDB.dat'\r\n\r\n");
             Environment.Exit(0);
         }
 
@@ -321,8 +342,8 @@ internal class Program
         {
             if (Directory.Exists(csv) == false)
             {
-                _logger.Warn(
-                    $"Path to '{csv}' doesn't exist. Creating...");
+                Log.Warning(
+                    "Path to '{Csv}' doesn't exist. Creating...", csv);
 
                 try
                 {
@@ -330,8 +351,8 @@ internal class Program
                 }
                 catch (Exception)
                 {
-                    _logger.Fatal(
-                        $"Unable to create directory '{csv}'. Does a file with the same name exist? Exiting");
+                    Log.Fatal(
+                        "Unable to create directory '{Csv}'. Does a file with the same name exist? Exiting", csv);
                     return;
                 }
             }
@@ -341,13 +362,13 @@ internal class Program
 
             string outFile;
 
-            _logger.Warn($"CSV output will be saved to '{csv}'\r\n");
+            Log.Warning("CSV output will be saved to '{Csv}'\r\n", csv);
 
-            StreamWriter swCsv = null;
-            CsvWriter csvWriter = null;
+            StreamWriter swCsv;
+            CsvWriter csvWriter;
             try
             {
-                _logger.Debug($"Dumping Energy Usage tables '{EnergyUsage.TableName}'");
+                Log.Debug("Dumping Energy Usage tables '{TableName}'", EnergyUsage.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_EnergyUsage_Output.csv";
 
@@ -374,13 +395,13 @@ internal class Program
             }
             catch (Exception e)
             {
-                _logger.Error($"Error exporting 'EnergyUsage' data! Error: {e.Message}");
+                Log.Error(e, "Error exporting 'EnergyUsage' data! Error: {Message}", e.Message);
             }
 
 
             try
             {
-                _logger.Debug($"Dumping Unknown 312 table '{Unknown312.TableName}'");
+                Log.Debug("Dumping Unknown 312 table '{TableName}'", Unknown312.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_Unknown312_Output.csv";
 
@@ -407,12 +428,12 @@ internal class Program
             }
             catch (Exception e)
             {
-                _logger.Error($"Error exporting 'Unknown312' data! Error: {e.Message}");
+                Log.Error(e, "Error exporting 'Unknown312' data! Error: {Message}", e.Message);
             }
 
             try
             {
-                _logger.Debug($"Dumping Unknown D8F table '{UnknownD8F.TableName}'");
+                Log.Debug("Dumping Unknown D8F table '{TableName}'", UnknownD8F.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_UnknownD8F_Output.csv";
 
@@ -441,12 +462,12 @@ internal class Program
             }
             catch (Exception e)
             {
-                _logger.Error($"Error exporting 'UnknownD8F' data! Error: {e.Message}");
+                Log.Error(e, "Error exporting 'UnknownD8F' data! Error: {Message}", e.Message);
             }
 
             try
             {
-                _logger.Debug($"Dumping AppResourceUseInfo table '{AppResourceUseInfo.TableName}'");
+                Log.Debug("Dumping AppResourceUseInfo table '{TableName}'", AppResourceUseInfo.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_AppResourceUseInfo_Output.csv";
 
@@ -471,12 +492,12 @@ internal class Program
             }
             catch (Exception e)
             {
-                _logger.Error($"Error exporting 'AppResourceUseInfo' data! Error: {e.Message}");
+                Log.Error(e, "Error exporting 'AppResourceUseInfo' data! Error: {Message}", e.Message);
             }
 
             try
             {
-                _logger.Debug($"Dumping NetworkConnection table '{NetworkConnection.TableName}'");
+                Log.Debug("Dumping NetworkConnection table '{TableName}'", NetworkConnection.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_NetworkConnections_Output.csv";
 
@@ -503,12 +524,12 @@ internal class Program
             }
             catch (Exception e)
             {
-                _logger.Error($"Error exporting 'NetworkConnection' data! Error: {e.Message}");
+                Log.Error(e, "Error exporting 'NetworkConnection' data! Error: {Message}", e.Message);
             }
 
             try
             {
-                _logger.Debug($"Dumping NetworkUsage table '{NetworkUsage.TableName}'");
+                Log.Debug("Dumping NetworkUsage table '{TableName}'", NetworkUsage.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_NetworkUsages_Output.csv";
 
@@ -533,12 +554,12 @@ internal class Program
             }
             catch (Exception e)
             {
-                _logger.Error($"Error exporting 'NetworkUsage' data! Error: {e.Message}");
+                Log.Error(e, "Error exporting 'NetworkUsage' data! Error: {Message}", e.Message);
             }
 
             try
             {
-                _logger.Debug($"Dumping PushNotification table '{PushNotification.TableName}'");
+                Log.Debug("Dumping PushNotification table '{TableName}'", PushNotification.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_PushNotifications_Output.csv";
 
@@ -563,16 +584,15 @@ internal class Program
             }
             catch (Exception e)
             {
-                _logger.Error($"Error exporting 'PushNotification' data! Error: {e.Message}");
+                Log.Error(e, "Error exporting 'PushNotification' data! Error: {Message}", e.Message);
             }
 
 
             sw.Stop();
 
-            _logger.Debug("");
+            Console.WriteLine();
 
-            _logger.Error(
-                $"Processing completed in {sw.Elapsed.TotalSeconds:N4} seconds\r\n");
+            Log.Error("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
         }
     }
 }

@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.Isam.Esent.Interop;
 using NLog;
 using Registry;
+using Serilog;
 using ServiceStack.Text;
 
 namespace SrumData;
@@ -1351,14 +1352,14 @@ public class Srum
 
         foreach (var table in Api.GetTableNames(session, dbid))
         {
-            Console.WriteLine($"TABLE: {table}");
+            Log.Information("TABLE: {Table}",table);
 
             foreach (var column in Api.GetTableColumns(session, dbid, table))
             {
-                Console.WriteLine("\t{0}: {1}", column.Name, column.Coltyp);
+                Log.Information("\t{Name}: {ColumnType}", column.Name, column.Coltyp);
             }
 
-            Console.WriteLine("------------------------------------");
+            Log.Information("------------------------------------");
         }
     }
 
