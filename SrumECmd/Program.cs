@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.NamingConventionBinder;
@@ -14,17 +15,23 @@ using System.Threading.Tasks;
 using Alphaleonis.Win32.Filesystem;
 using CsvHelper;
 using Exceptionless;
-using NLog;
-using NLog.Config;
-using NLog.Targets;
+using Microsoft.Isam.Esent.Interop;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
 using ServiceStack;
 using SrumData;
+
+#if NET462
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
 using Path = Alphaleonis.Win32.Filesystem.Path;
+#else
+using Path = System.IO.Path;
+using Directory = System.IO.Directory;
+using File = System.IO.File;
+#endif
+
 
 namespace SrumECmd;
 
@@ -53,10 +60,10 @@ internal class Program
 
     private static readonly string Footer =
         @"Examples: SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" -r ""C:\Temp\SOFTWARE"" --csv ""C:\Temp\"" " + "\r\n\t " +
-        @" SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" --csv ""c:\temp""" + "\r\n\t " +
-        @" SrumECmd.exe -d ""C:\Temp"" --csv ""c:\temp""" + "\r\n\t " +
+        @"   SrumECmd.exe -f ""C:\Temp\SRUDB.dat"" --csv ""c:\temp""" + "\r\n\t " +
+        @"   SrumECmd.exe -d ""C:\Temp"" --csv ""c:\temp""" + "\r\n\t " +
         "\r\n\t" +
-        "  Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
+        "    Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes\r\n";
 
     private static string[] _args;
     private static RootCommand _rootCommand;
@@ -73,37 +80,11 @@ internal class Program
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
 
-    private static void SetupNLog()
-    {
-        if (File.Exists(Path.Combine(BaseDirectory, "Nlog.config")))
-        {
-            return;
-        }
-
-        var config = new LoggingConfiguration();
-        var loglevel = LogLevel.Info;
-
-        var layout = @"${message}";
-
-        var consoleTarget = new ColoredConsoleTarget();
-
-        config.AddTarget("console", consoleTarget);
-
-        consoleTarget.Layout = layout;
-
-        var rule1 = new LoggingRule("*", loglevel, consoleTarget);
-        config.LoggingRules.Add(rule1);
-
-        LogManager.Configuration = config;
-    }
-
     private static async Task Main(string[] args)
     {
         ExceptionlessClient.Default.Startup("wPXTiiouhEbK0s19lCgjiDThpfrW0ODU8RskdPEk");
 
         _args = args;
-
-        SetupNLog();
 
         var csvOption = new Option<string>(
             "--csv",
@@ -116,7 +97,7 @@ internal class Program
         {
             new Option<string>(
                 "-f",
-                "Amcache.hve file to parse"),
+                "SRUDB.dat file to parse"),
             new Option<string>(
                 "-r",
                 "SOFTWARE hive to process. This is optional, but recommended\r\n"),
@@ -173,6 +154,15 @@ internal class Program
             .MinimumLevel.ControlledBy(levelSwitch);
 
         Log.Logger = conf.CreateLogger();
+        
+        if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+        {
+            Console.WriteLine();
+            Log.Fatal("Non-Windows platforms not supported due to the need to load ESI specific Windows libraries! Exiting...");
+            Console.WriteLine();
+            Environment.Exit(0);
+            return;
+        }
 
         if (f.IsNullOrEmpty() && d.IsNullOrEmpty())
         {
@@ -217,7 +207,7 @@ internal class Program
 
         if (IsAdministrator() == false)
         {
-            Log.Fatal("Warning: Administrator privileges not found!\r\n");
+            Log.Warning("Warning: Administrator privileges not found!\r\n");
         }
 
         var sw = new Stopwatch();
@@ -229,6 +219,45 @@ internal class Program
 
         if (d.IsNullOrEmpty() == false)
         {
+            IEnumerable<string> files2;
+
+#if NET6_0
+            var enumerationOptions = new EnumerationOptions
+            {
+                IgnoreInaccessible = true,
+                MatchCasing = MatchCasing.CaseInsensitive,
+                RecurseSubdirectories = true,
+                AttributesToSkip = 0
+            };
+                        
+            files2 =
+                Directory.EnumerateFileSystemEntries(d, "SRUDB.DAT",enumerationOptions);
+            
+            f = files2.FirstOrDefault();
+
+            if (f.IsNullOrEmpty())
+            {
+                Log.Warning("Did not locate any files named 'SRUDB.dat'! Exiting");
+                return;
+            }
+
+            Log.Information("Found SRUM database file '{F}'!", f);
+            
+            files2 =
+                Directory.EnumerateFileSystemEntries(d, "SOFTWARE",enumerationOptions);
+            
+            r = files2.FirstOrDefault();
+
+            if (r.IsNullOrEmpty())
+            {
+                Log.Warning("Did not locate any files named 'SOFTWARE'! Registry data will not be extracted");
+            }
+            else
+            {
+                Log.Information("Found SOFTWARE hive '{R}'!", r);
+            }
+            
+            #elif NET462 
             //kape mode, so find the files
             var ilter = new DirectoryEnumerationFilters();
             ilter.InclusionFilter = fsei =>
@@ -255,7 +284,7 @@ internal class Program
                 DirectoryEnumerationOptions.SkipReparsePoints | DirectoryEnumerationOptions.ContinueOnException |
                 DirectoryEnumerationOptions.BasicSearch;
 
-            var files2 =
+             files2 =
                 Directory.EnumerateFileSystemEntries(d, dirEnumOptions, ilter);
 
             f = files2.FirstOrDefault();
@@ -290,7 +319,8 @@ internal class Program
 
             files2 =
                 Directory.EnumerateFileSystemEntries(d, dirEnumOptions, ilter);
-
+            
+            
             r = files2.FirstOrDefault();
 
             if (r.IsNullOrEmpty())
@@ -301,6 +331,11 @@ internal class Program
             {
                 Log.Information("Found SOFTWARE hive '{R}'!", r);
             }
+#endif
+            
+            
+            
+
 
             Console.WriteLine();
         }
@@ -309,8 +344,11 @@ internal class Program
         {
             Log.Information("Processing '{F}'...", f);
             sr = new Srum(f, r);
-
-            Log.Warning("\r\nProcessing complete!\r\n");
+            
+            Console.WriteLine();
+            Log.Information("Processing complete!");
+            Console.WriteLine();
+            
             Log.Information("{EnergyUse} {EnergyUsagesCount:N0}", "Energy Usage count:".PadRight(30),
                 sr.EnergyUsages.Count);
             Log.Information("{Unknown312s} {Unknown312sCount:N0}", "Unknown 312 count:".PadRight(30),
@@ -342,7 +380,7 @@ internal class Program
         {
             if (Directory.Exists(csv) == false)
             {
-                Log.Warning(
+                Log.Information(
                     "Path to '{Csv}' doesn't exist. Creating...", csv);
 
                 try
@@ -362,7 +400,7 @@ internal class Program
 
             string outFile;
 
-            Log.Warning("CSV output will be saved to '{Csv}'\r\n", csv);
+            Log.Information("CSV output will be saved to '{Csv}'\r\n", csv);
 
             StreamWriter swCsv;
             CsvWriter csvWriter;
@@ -467,7 +505,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping AppResourceUseInfo table '{TableName}'", AppResourceUseInfo.TableName);
+                Log.Debug("Dumping App Resource Use Info table '{TableName}'", AppResourceUseInfo.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_AppResourceUseInfo_Output.csv";
 
@@ -497,7 +535,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping NetworkConnection table '{TableName}'", NetworkConnection.TableName);
+                Log.Debug("Dumping Network Connection table '{TableName}'", NetworkConnection.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_NetworkConnections_Output.csv";
 
@@ -529,7 +567,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping NetworkUsage table '{TableName}'", NetworkUsage.TableName);
+                Log.Debug("Dumping Network Usage table '{TableName}'", NetworkUsage.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_NetworkUsages_Output.csv";
 
@@ -559,7 +597,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping PushNotification table '{TableName}'", PushNotification.TableName);
+                Log.Debug("Dumping Push Notification table '{TableName}'", PushNotification.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_PushNotifications_Output.csv";
 
@@ -587,12 +625,9 @@ internal class Program
                 Log.Error(e, "Error exporting 'PushNotification' data! Error: {Message}", e.Message);
             }
 
-
             sw.Stop();
 
-            Console.WriteLine();
-
-            Log.Error("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
+            Log.Information("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
         }
     }
 }

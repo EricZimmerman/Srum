@@ -2,7 +2,7 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net462.0;net6.0</TargetFrameworks>
+        <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <LangVersion>10</LangVersion>
         <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
         <Version>0.5.1.0</Version>
@@ -23,8 +23,8 @@
         <PackageReference Include="Serilog.Sinks.Console" Version="4.0.1" />
 
         <PackageReference Include="ServiceStack.Text" Version="5.13.2" />
-        <PackageReference Include="System.CommandLine" Version="2.0.0-beta1.21612.1" />
-        <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="0.3.0-alpha.21612.1" />
+        <PackageReference Include="System.CommandLine" Version="2.0.0-beta2.21617.1" />
+        <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta2.21617.1" />
         <PackageReference Include="System.Security.Principal.Windows" Version="5.0.0" />
     </ItemGroup>
 
