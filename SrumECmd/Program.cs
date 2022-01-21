@@ -129,6 +129,8 @@ internal class Program
         _rootCommand.Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(DoWork);
 
         await _rootCommand.InvokeAsync(args);
+        
+        Log.CloseAndFlush();
     }
 
     private static void DoWork(string f, string r, string d, string csv, string dt, bool debug, bool trace)
