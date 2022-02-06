@@ -17,8 +17,8 @@ public class SrumTest
         {
             var r = new Srum(@"D:\OneDrive\HPSpectreSrum\2\SRU\SRUDB.dat", @"D:\OneDrive\HPSpectreSrum\2\config\SOFTWARE");
             Console.WriteLine($"r.EnergyUsages {r.EnergyUsages.Count} {EnergyUsage.TableName}");
-            Console.WriteLine($"r.Unknown312 {r.Unknown312s.Count} {Unknown312.TableName}");
-            Console.WriteLine($"r.UnknownD8Fs {r.UnknownD8Fs.Count} {UnknownD8F.TableName}");
+            Console.WriteLine($"r.Unknown312 {r.TimelineProviders.Count} {TimelineProvider.TableName}");
+            Console.WriteLine($"r.UnknownD8Fs {r.Vfuprovs.Count} {Vfuprov.TableName}");
             Console.WriteLine($"r.AppResourceUseInfos {r.AppResourceUseInfos.Count} {AppResourceUseInfo.TableName}");
             Console.WriteLine($"r.NetworkConnections {r.NetworkConnections.Count} {NetworkConnection.TableName}");
             Console.WriteLine($"r.NetworkUsages {r.NetworkUsages.Count} {NetworkUsage.TableName}");
@@ -36,8 +36,8 @@ public class SrumTest
 
 
         Console.WriteLine($"r1.EnergyUsages {r1.EnergyUsages.Count} {EnergyUsage.TableName}");
-        Console.WriteLine($"r1.Unknown312 {r1.Unknown312s.Count} {Unknown312.TableName}");
-        Console.WriteLine($"r1.UnknownD8Fs {r1.UnknownD8Fs.Count} {UnknownD8F.TableName}");
+        Console.WriteLine($"r1.Unknown312 {r1.TimelineProviders.Count} {TimelineProvider.TableName}");
+        Console.WriteLine($"r1.UnknownD8Fs {r1.Vfuprovs.Count} {Vfuprov.TableName}");
 
         // foreach (var idMapInfo in r.PushNotifications)
         // {

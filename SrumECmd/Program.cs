@@ -354,9 +354,9 @@ internal class Program
             Log.Information("{EnergyUse} {EnergyUsagesCount:N0}", "Energy Usage count:".PadRight(30),
                 sr.EnergyUsages.Count);
             Log.Information("{Unknown312s} {Unknown312sCount:N0}", "Unknown 312 count:".PadRight(30),
-                sr.Unknown312s.Count);
+                sr.TimelineProviders.Count);
             Log.Information("{UnknownD8Fs} {UnknownD8FsCount:N0}", "Unknown D8F count:".PadRight(30),
-                sr.UnknownD8Fs.Count);
+                sr.Vfuprovs.Count);
             Log.Information("{AppResourceUseInfos} {AppResourceUseInfosCount:N0}",
                 "App Resource Usage count:".PadRight(30), sr.AppResourceUseInfos.Count);
             Log.Information("{NetworkConnections} {NetworkConnectionsCount:N0}",
@@ -441,7 +441,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping Unknown 312 table '{TableName}'", Unknown312.TableName);
+                Log.Debug("Dumping Unknown 312 table '{TableName}'", TimelineProvider.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_Unknown312_Output.csv";
 
@@ -451,17 +451,17 @@ internal class Program
 
                 csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
 
-                var foo = csvWriter.Context.AutoMap<Unknown312>();
+                var foo = csvWriter.Context.AutoMap<TimelineProvider>();
                 foo.Map(t => t.Timestamp).Convert(t =>
                     $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
                 foo.Map(t => t.EndTime).Convert(t =>
                     $"{t.Value.EndTime.ToString(dt)}");
 
                 csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<Unknown312>();
+                csvWriter.WriteHeader<TimelineProvider>();
                 csvWriter.NextRecord();
 
-                csvWriter.WriteRecords(sr.Unknown312s.Values);
+                csvWriter.WriteRecords(sr.TimelineProviders.Values);
 
                 csvWriter.Flush();
                 swCsv.Flush();
@@ -473,7 +473,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping Unknown D8F table '{TableName}'", UnknownD8F.TableName);
+                Log.Debug("Dumping Unknown D8F table '{TableName}'", Vfuprov.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_UnknownD8F_Output.csv";
 
@@ -483,7 +483,7 @@ internal class Program
 
                 csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
 
-                var foo = csvWriter.Context.AutoMap<UnknownD8F>();
+                var foo = csvWriter.Context.AutoMap<Vfuprov>();
                 foo.Map(t => t.Timestamp).Convert(t =>
                     $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
                 foo.Map(t => t.EndTime).Convert(t =>
@@ -492,10 +492,10 @@ internal class Program
                     $"{t.Value.StartTime.ToString(dt)}");
 
                 csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<UnknownD8F>();
+                csvWriter.WriteHeader<Vfuprov>();
                 csvWriter.NextRecord();
 
-                csvWriter.WriteRecords(sr.UnknownD8Fs.Values);
+                csvWriter.WriteRecords(sr.Vfuprovs.Values);
 
                 csvWriter.Flush();
                 swCsv.Flush();

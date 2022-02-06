@@ -6,7 +6,6 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using Microsoft.Isam.Esent.Interop;
-using NLog;
 using Registry;
 using Serilog;
 using ServiceStack.Text;
@@ -279,9 +278,9 @@ public class AppResourceUseInfo
     public static string TableName => "{D10CA2FE-6FCF-4F6D-848E-B2E99266FA89}";
 }
 
-public class UnknownD8F
+public class Vfuprov
 {
-    public UnknownD8F(int id, DateTime timestamp, int userId, int appId, int flags, long startTime, long endTime)
+    public Vfuprov(int id, DateTime timestamp, int userId, int appId, int flags, long startTime, long endTime)
     {
         Id = id;
         var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
@@ -324,9 +323,9 @@ public class UnknownD8F
     public TimeSpan Duration => EndTime.Subtract(StartTime);
 }
 
-public class Unknown312
+public class TimelineProvider
 {
-    public Unknown312(int id, DateTime timestamp, int userId, int appId, int durationMs, long endTime)
+    public TimelineProvider(int id, DateTime timestamp, int userId, int appId, int durationMs, long endTime)
     {
         Id = id;
         UserId = userId;
@@ -1062,28 +1061,26 @@ public class Srum
     /// </summary>
     public readonly Dictionary<string, string> SidToUser;
 
-    public readonly Dictionary<int, Unknown312> Unknown312s;
-    public readonly Dictionary<int, UnknownD8F> UnknownD8Fs;
+    public readonly Dictionary<int, TimelineProvider> TimelineProviders;
+    public readonly Dictionary<int, Vfuprov> Vfuprovs;
     public readonly Dictionary<int, UserInfo> UserMaps;
 
     public Srum(string fileName, string softwareHive)
     {
         if (File.Exists(fileName) == false)
         {
-            throw new FileNotFoundException($"'{fileName}' does not exist!");
+            throw new FileNotFoundException($"{fileName} does not exist!");
         }
 
         SidToUser = new Dictionary<string, string>();
         ProfileIndexToSsid = new Dictionary<int, string>();
 
-        var logger = LogManager.GetLogger("Main");
-
         if (softwareHive != null)
         {
-            logger.Debug("Processing SOFTWARE Registry hive");
+            Log.Debug("Processing {Hive} Registry hive","SOFTWARE");
             if (File.Exists(softwareHive) == false)
             {
-                throw new FileNotFoundException($"'{softwareHive}' does not exist!");
+                throw new FileNotFoundException($"{softwareHive} does not exist!");
             }
 
             var reg = new RegistryHiveOnDemand(softwareHive);
@@ -1143,14 +1140,14 @@ public class Srum
             }
 
 
-            logger.Debug(SidToUser.Dump());
-            logger.Debug(ProfileIndexToSsid.Dump());
+            Log.Debug("{SidToUser}",SidToUser.Dump());
+            Log.Debug("{ProfileIndexToSsid}",ProfileIndexToSsid.Dump());
         }
 
-        logger.Debug("Processing SOFTWARE Registry hive");
+        Log.Debug("Processing {Hive} Registry hive","SOFTWARE");
 
 
-        logger.Debug("Initiating instance");
+        Log.Debug("Initiating instance");
         using var instance = new Instance("pulldata");
         instance.Parameters.LogFileDirectory = Path.GetDirectoryName(fileName);
         instance.Parameters.SystemDirectory = Path.GetDirectoryName(fileName);
@@ -1161,12 +1158,12 @@ public class Srum
 
         instance.Init();
 
-        logger.Debug("Setting up session");
+        Log.Debug("Setting up session");
         using var session = new Session(instance);
         Api.JetAttachDatabase(session, fileName, AttachDatabaseGrbit.ReadOnly);
         Api.JetOpenDatabase(session, fileName, null, out var dbid, OpenDatabaseGrbit.ReadOnly);
 
-        logger.Debug("Initiating dictionaries");
+        Log.Debug("Initiating dictionaries");
         AppMaps = new Dictionary<int, AppInfo>();
         UserMaps = new Dictionary<int, UserInfo>();
         NetworkUsages = new Dictionary<int, NetworkUsage>();
@@ -1174,80 +1171,81 @@ public class Srum
         NetworkConnections = new Dictionary<int, NetworkConnection>();
         PushNotifications = new Dictionary<int, PushNotification>();
         EnergyUsages = new Dictionary<int, EnergyUsage>();
-        UnknownD8Fs = new Dictionary<int, UnknownD8F>();
-        Unknown312s = new Dictionary<int, Unknown312>();
+        Vfuprovs = new Dictionary<int, Vfuprov>();
+        TimelineProviders = new Dictionary<int, TimelineProvider>();
 
-        logger.Debug("Building ID Maps");
+        Log.Debug("Building ID Maps");
         BuildIdMap(session, dbid);
 
-        logger.Debug("Getting NetworkUsageInfo");
+        Log.Debug("Getting {Thing}","NetworkUsageInfo");
         try
         {
             GetNetworkUsageInfo(session, dbid);
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing Network Usage info ({NetworkUsage.TableName}): {e.Message}");
+            Log.Warning(e,"Error processing Network Usage info ({TableName}): {Message}",NetworkUsage.TableName,e.Message);
         }
 
-        logger.Debug("Getting ApplicationResourceUsage ");
+        Log.Debug("Getting {Thing}","ApplicationResourceUsage");
+        
         try
         {
             GetApplicationResourceUsage(session, dbid);
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing App Resource Use info ({AppResourceUseInfo.TableName}): {e.Message}");
+            Log.Warning(e,"Error processing App Resource Use info ({TableName}): {Message}",AppResourceUseInfo.TableName,e.Message);
         }
 
-        logger.Debug("Getting NetworkConnections");
+        Log.Debug("Getting {Thing}","NetworkConnections");
         try
         {
             GetNetworkConnections(session, dbid);
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing Network Connection info ({NetworkConnection.TableName}): {e.Message}");
+            Log.Warning(e,"Error processing Network Connection info ({TableName}): {Message}",NetworkConnection.TableName,e.Message);
         }
 
-        logger.Debug("Getting PushNotifications");
+        Log.Debug("Getting {Thing}","PushNotifications");
         try
         {
             GetPushNotifications(session, dbid);
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing Push Notification info ({PushNotification.TableName}): {e.Message}");
+            Log.Warning(e,"Error processing Push Notification info ({TableName}): {Message}",PushNotification.TableName,e.Message);
         }
 
-        logger.Debug("Getting EnergyUsages(and LT)");
+        Log.Debug("Getting {Thing}","EnergyUsages (and LT)");
         try
         {
             GetEnergyUsages(session, dbid);
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing Energy Usage info ({EnergyUsage.TableName}): {e.Message}");
+            Log.Warning(e,"Error processing Energy Usage info ({TableName}): {Message}",EnergyUsage.TableName,e.Message);
         }
 
-        logger.Debug("Getting UnknownD8Fs");
+        Log.Debug("Getting {Thing}","vfuprov");
         try
         {
-            GetUnknownD8Fs(session, dbid);
+            GetVfuprovs(session, dbid);
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing Unknown D8F info ({UnknownD8F.TableName}): {e.Message}");
+            Log.Warning(e,"Error processing Vfuprov info ({TableName}): {Message}",Vfuprov.TableName,e.Message);
         }
 
-        logger.Debug("Getting Unknown312s");
+        Log.Debug("Getting {Thing}","Timeline Provider");
         try
         {
-            GetUnknown312s(session, dbid);
+            GetAppTimelines(session, dbid);
         }
         catch (Exception e)
         {
-            logger.Warn($"Error processing Unknown 312 info ({Unknown312.TableName}): {e.Message}");
+            Log.Warning(e,"Error processing Timeline Provider info ({TableName}): {Message}",TimelineProvider.TableName,e.Message);
         }
     }
 
@@ -1256,7 +1254,7 @@ public class Srum
     /// </summary>
     /// <param name="session"></param>
     /// <param name="dbid"></param>
-    private void GetUnknownD8Fs(Session session, JET_DBID dbid)
+    private void GetVfuprovs(Session session, JET_DBID dbid)
     {
         using var pushTable
             = new Table(session, dbid, "{7ACBBAA3-D029-4BE4-9A7A-0885927F1D8F}", OpenTableGrbit.ReadOnly);
@@ -1277,7 +1275,7 @@ public class Srum
 
             var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
 
-            var pu = new UnknownD8F(id.Value, dt.Value, userId.Value, appId.Value, flags.Value, startTime.Value, endTime.Value);
+            var pu = new Vfuprov(id.Value, dt.Value, userId.Value, appId.Value, flags.Value, startTime.Value, endTime.Value);
 
             pu.ExeInfo = AppMaps[appId.Value].ExeInfo;
             pu.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
@@ -1286,7 +1284,7 @@ public class Srum
             pu.SidType = UserMaps[userId.Value].SidType;
             pu.UserName = UserMaps[userId.Value].UserName;
 
-            UnknownD8Fs.Add(pu.Id, pu);
+            Vfuprovs.Add(pu.Id, pu);
         }
 
         Api.JetResetTableSequential(session, pushTable
@@ -1298,7 +1296,7 @@ public class Srum
     /// </summary>
     /// <param name="session"></param>
     /// <param name="dbid"></param>
-    private void GetUnknown312s(Session session, JET_DBID dbid)
+    private void GetAppTimelines(Session session, JET_DBID dbid)
     {
         using var pushTable
             = new Table(session, dbid, "{5C8CF1C7-7257-4F13-B223-970EF5939312}", OpenTableGrbit.ReadOnly);
@@ -1318,7 +1316,7 @@ public class Srum
 
             var dt = Api.RetrieveColumnAsDateTime(session, pushTable, Api.GetTableColumnid(session, pushTable, "TimeStamp"));
 
-            var pu = new Unknown312(id.Value, dt.Value, userId.Value, appId.Value, dur.Value, endTime.Value);
+            var pu = new TimelineProvider(id.Value, dt.Value, userId.Value, appId.Value, dur.Value, endTime.Value);
 
             pu.ExeInfo = AppMaps[appId.Value].ExeInfo;
             pu.ExeInfoDescription = AppMaps[appId.Value].ExeInfoDescription;
@@ -1327,7 +1325,7 @@ public class Srum
             pu.SidType = UserMaps[userId.Value].SidType;
             pu.UserName = UserMaps[userId.Value].UserName;
 
-            Unknown312s.Add(pu.Id, pu);
+            TimelineProviders.Add(pu.Id, pu);
         }
 
         Api.JetResetTableSequential(session, pushTable
@@ -1338,7 +1336,7 @@ public class Srum
     {
         if (File.Exists(fileName) == false)
         {
-            throw new FileNotFoundException($"'{fileName}' does not exist!");
+            throw new FileNotFoundException($"{fileName} does not exist!");
         }
 
         using var instance = new Instance("pulldata");
@@ -1479,8 +1477,8 @@ public class Srum
                     lastSeen += 1;
                 }
 
-                var logger = LogManager.GetLogger("Main");
-                logger.Warn($"Id '{pu.Id}' in use from LT table. Incrementing by '{lastSeen}'");
+                
+                Log.Warning("Id {Id} in use from LT table. Incrementing by {LastSeen}",pu.Id,lastSeen);
                 pu.Id += lastSeen;
             }
 
