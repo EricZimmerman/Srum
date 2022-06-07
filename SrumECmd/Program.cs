@@ -353,7 +353,7 @@ internal class Program
             
             Log.Information("{EnergyUse} {EnergyUsagesCount:N0}", "Energy Usage count:".PadRight(30),
                 sr.EnergyUsages.Count);
-            Log.Information("{Unknown312s} {Unknown312sCount:N0}", "Unknown 312 count:".PadRight(30),
+            Log.Information("{AppTimelineProviders} {AppTimelineProvidersCount:N0}", "AppTimelineProvider count:".PadRight(30),
                 sr.TimelineProviders.Count);
             Log.Information("{UnknownD8Fs} {UnknownD8FsCount:N0}", "Unknown D8F count:".PadRight(30),
                 sr.Vfuprovs.Count);
@@ -443,7 +443,7 @@ internal class Program
             {
                 Log.Debug("Dumping Unknown 312 table '{TableName}'", TimelineProvider.TableName);
 
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_Unknown312_Output.csv";
+                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_AppTimelineProvider_Output.csv";
 
                 outFile = Path.Combine(csv, outName);
 
@@ -468,7 +468,7 @@ internal class Program
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error exporting 'Unknown312' data! Error: {Message}", e.Message);
+                Log.Error(e, "Error exporting 'AppTimelineProvider' data! Error: {Message}", e.Message);
             }
 
             try
