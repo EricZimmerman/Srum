@@ -441,7 +441,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping Unknown 312 table '{TableName}'", TimelineProvider.TableName);
+                Log.Debug("Dumping AppTimelineProvider table '{TableName}'", TimelineProvider.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_AppTimelineProvider_Output.csv";
 
@@ -473,7 +473,7 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping Unknown D8F table '{TableName}'", Vfuprov.TableName);
+                Log.Debug("Dumping vfuprov table '{TableName}'", Vfuprov.TableName);
 
                 outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_vfuprov_Output.csv";
 
