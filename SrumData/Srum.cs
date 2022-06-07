@@ -325,7 +325,7 @@ public class Vfuprov
 
 public class TimelineProvider
 {
-    public TimelineProvider(int id, DateTime timestamp, int userId, int appId, int durationMs, long endTime)
+    public TimelineProvider(int id, DateTime timestamp, int userId, int appId, int durationMs, long endTime, long audioInS, long audioOutS, long keyboardInputS, long mouseInputS, long userInputS, long inFocusS)
     {
         Id = id;
         UserId = userId;
@@ -333,6 +333,12 @@ public class TimelineProvider
         DurationMs = durationMs;
         var tsUtc = DateTime.SpecifyKind(timestamp, DateTimeKind.Utc);
         Timestamp = new DateTimeOffset(tsUtc);
+        AudioInS = audioInS;
+        AudioOutS = audioOutS;
+        KeyboardInputS = keyboardInputS;
+        MouseInputS = mouseInputS;
+        UserInputS = userInputS;
+        InFocusS = inFocusS;
 
         var dts = DateTimeOffset.FromFileTime(endTime);
         EndTime = dts.ToUniversalTime();
@@ -399,6 +405,12 @@ public class TimelineProvider
 
     public int UserId { get; }
     public int AppId { get; }
+    public long AudioInS { get; }
+    public long AudioOutS { get; }
+    public long KeyboardInputS { get; }
+    public long MouseInputS { get; }
+    public long UserInputS { get; }
+    public long InFocusS { get; }
 
     public DateTimeOffset EndTime { get; }
 
