@@ -33,7 +33,9 @@ public class AppInfo
             return;
         }
 
-        ExeInfo = segs[0];
+        // Incase the filename starts with "!" return it, otherwise get original value.
+        ExeInfo = segs[0].IsNullOrEmpty() ? "!" : segs[0];
+        
         int segsLength = segs.Length;
 
         // Incase the filename had "!" in it, append everything back up untill the file type extension.
