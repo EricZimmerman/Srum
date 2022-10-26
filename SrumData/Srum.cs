@@ -28,12 +28,34 @@ public class AppInfo
         var tempVal = ExeInfo.Substring(2); //strip !!
         var segs = tempVal.Split('!');
 
-        ExeInfo = segs[0];
+        if (segs.Length < 4)
+        {
+            return;
+        }
 
-        Unknown = segs[2];
-        ExeInfoDescription = segs[3];
+        // Incase the filename starts with "!" return it, otherwise get original value.
+        ExeInfo = segs[0].IsNullOrEmpty() ? "!" : segs[0];
+        
+        int segsLength = segs.Length;
 
-        Timestamp = DateTimeOffset.ParseExact(segs[1], "yyyy/MM/dd:HH:mm:ss", null,
+        // Incase the filename had "!" in it, append everything back up untill the file type extension.
+        for (int i = 1; i < segsLength - 3; i++)
+        {
+            // If the string is empty it means there were several "!", else append "!<originalValue>"
+            if (segs[i].IsNullOrEmpty())
+            {
+                ExeInfo += "!";
+            }
+            else 
+            {
+                ExeInfo += "!" + segs[i];
+            }
+        }
+
+        Unknown = segs[segsLength - 2];
+        ExeInfoDescription = segs[segsLength - 1];
+
+        Timestamp = DateTimeOffset.ParseExact(segs[segsLength - 3], "yyyy/MM/dd:HH:mm:ss", null,
             DateTimeStyles.AssumeUniversal);
     }
 
