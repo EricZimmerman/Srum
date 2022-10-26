@@ -8,6 +8,7 @@ using System.Text;
 using Microsoft.Isam.Esent.Interop;
 using Registry;
 using Serilog;
+using ServiceStack;
 using ServiceStack.Text;
 
 namespace SrumData;
