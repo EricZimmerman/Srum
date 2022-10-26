@@ -353,9 +353,9 @@ internal class Program
             
             Log.Information("{EnergyUse} {EnergyUsagesCount:N0}", "Energy Usage count:".PadRight(30),
                 sr.EnergyUsages.Count);
-            Log.Information("{Unknown312s} {Unknown312sCount:N0}", "Unknown 312 count:".PadRight(30),
+            Log.Information("{AppTimelineProviders} {AppTimelineProvidersCount:N0}", "AppTimelineProvider count:".PadRight(30),
                 sr.TimelineProviders.Count);
-            Log.Information("{UnknownD8Fs} {UnknownD8FsCount:N0}", "Unknown D8F count:".PadRight(30),
+            Log.Information("{vfuprovs} {vfuprovsCount:N0}", "vfuprov count:".PadRight(30),
                 sr.Vfuprovs.Count);
             Log.Information("{AppResourceUseInfos} {AppResourceUseInfosCount:N0}",
                 "App Resource Usage count:".PadRight(30), sr.AppResourceUseInfos.Count);
@@ -441,9 +441,9 @@ internal class Program
 
             try
             {
-                Log.Debug("Dumping Unknown 312 table '{TableName}'", TimelineProvider.TableName);
+                Log.Debug("Dumping AppTimelineProvider table '{TableName}'", TimelineProvider.TableName);
 
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_Unknown312_Output.csv";
+                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_AppTimelineProvider_Output.csv";
 
                 outFile = Path.Combine(csv, outName);
 
@@ -468,14 +468,14 @@ internal class Program
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error exporting 'Unknown312' data! Error: {Message}", e.Message);
+                Log.Error(e, "Error exporting 'AppTimelineProvider' data! Error: {Message}", e.Message);
             }
 
             try
             {
-                Log.Debug("Dumping Unknown D8F table '{TableName}'", Vfuprov.TableName);
+                Log.Debug("Dumping vfuprov table '{TableName}'", Vfuprov.TableName);
 
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_UnknownD8F_Output.csv";
+                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_vfuprov_Output.csv";
 
                 outFile = Path.Combine(csv, outName);
 
@@ -502,7 +502,7 @@ internal class Program
             }
             catch (Exception e)
             {
-                Log.Error(e, "Error exporting 'UnknownD8F' data! Error: {Message}", e.Message);
+                Log.Error(e, "Error exporting 'vfuprov' data! Error: {Message}", e.Message);
             }
 
             try
