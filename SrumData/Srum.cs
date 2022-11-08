@@ -1176,6 +1176,7 @@ public class Srum
         instance.Parameters.SystemDirectory = Path.GetDirectoryName(fileName);
         instance.Parameters.BaseName = "SRU";
         instance.Parameters.TempDirectory = Path.GetDirectoryName(fileName);
+        instance.Parameters.EnableIndexCleanup = true;
 
         //instance.Parameters.Recovery = false;            
 
@@ -1183,7 +1184,7 @@ public class Srum
 
         Log.Debug("Setting up session");
         using var session = new Session(instance);
-        Api.JetAttachDatabase(session, fileName, AttachDatabaseGrbit.ReadOnly);
+        Api.JetAttachDatabase(session, fileName, AttachDatabaseGrbit.DeleteCorruptIndexes);
         Api.JetOpenDatabase(session, fileName, null, out var dbid, OpenDatabaseGrbit.ReadOnly);
 
         Log.Debug("Initiating dictionaries");
