@@ -15,7 +15,7 @@ public class SrumTest
 
         try
         {
-            var r = new Srum(@"D:\OneDrive\HPSpectreSrum\2\SRU\SRUDB.dat", @"D:\OneDrive\HPSpectreSrum\2\config\SOFTWARE");
+            var r = new Srum(@"C:\temp\testenv\SRUM\SRUDB.dat", @"C:\temp\testenv\tout\C\Windows\System32\config\SOFTWARE");
             Console.WriteLine($"r.EnergyUsages {r.EnergyUsages.Count} {EnergyUsage.TableName}");
             Console.WriteLine($"r.Unknown312 {r.TimelineProviders.Count} {TimelineProvider.TableName}");
             Console.WriteLine($"r.UnknownD8Fs {r.Vfuprovs.Count} {Vfuprov.TableName}");
@@ -31,7 +31,7 @@ public class SrumTest
         }
 
 
-        var r1 = new Srum(@"D:\OneDrive\HPSpectreSrum\2\SRUclean\SRUDB.dat", @"D:\OneDrive\HPSpectreSrum\2\config\SOFTWARE");
+        var r1 = new Srum(@"C:\temp\testenv\SRUM\SRUDB.dat", @"C:\temp\testenv\tout\C\Windows\System32\config\SOFTWARE");
         //     var r = new Srum(@"C:\Temp\tout\c\Windows\System32\SRU\SRUDB.dat",null);
 
 
