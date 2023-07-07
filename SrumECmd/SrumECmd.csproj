@@ -10,6 +10,7 @@
         <Description>Dumps SRUM data to CSV</Description>
         <Copyright>Eric R. Zimmerman</Copyright>
         <PackageLicenseExpression>MIT</PackageLicenseExpression>
+        <IsPackable>false</IsPackable>
     </PropertyGroup>
 
     <ItemGroup>
