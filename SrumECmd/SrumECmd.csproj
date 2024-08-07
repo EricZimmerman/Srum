@@ -5,7 +5,7 @@
         <TargetFrameworks>net462;net6.0</TargetFrameworks>
         <LangVersion>10</LangVersion>
         <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
-        <Version>0.5.1.0</Version>
+        <Version>0.5.2.0</Version>
         <Authors>Eric R. Zimmerman</Authors>
         <Description>Dumps SRUM data to CSV</Description>
         <Copyright>Eric R. Zimmerman</Copyright>
