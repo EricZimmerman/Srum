@@ -19,8 +19,8 @@
             <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="CsvHelper" Version="30.0.1" />
-        <PackageReference Include="Exceptionless" Version="6.0.2" />
-        <PackageReference Include="Fody" Version="6.8.0">
+        <PackageReference Include="Exceptionless" Version="6.0.4" />
+        <PackageReference Include="Fody" Version="6.8.1">
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
         <PackageReference Include="Serilog" Version="3.0.1" />
