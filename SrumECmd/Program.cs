@@ -397,7 +397,7 @@ internal class Program
                 "App Resource Usage count:".PadRight(30), sr.AppResourceUseInfos.Count);
             Log.Information("{NetworkConnections} {NetworkConnectionsCount:N0}",
                 "Network Connection count:".PadRight(30), sr.NetworkConnections.Count);
-            Log.Information("{NetworkUsages} {NetworkUsagesCount}", "Network Usage count:".PadRight(30),
+            Log.Information("{NetworkUsages} {NetworkUsagesCount:N0}", "Network Usage count:".PadRight(30),
                 sr.NetworkUsages.Count);
             Log.Information("{PushNotifications} {PushNotificationsCount:N0}", "Push Notification count:".PadRight(30),
                 sr.PushNotifications.Count);
