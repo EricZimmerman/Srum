@@ -11,6 +11,7 @@ using System.Reflection;
 using System.Runtime.InteropServices;
 using System.Security.Principal;
 using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using Alphaleonis.Win32.Filesystem;
 using CsvHelper;
@@ -129,7 +130,7 @@ internal class Program
         _rootCommand.Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(DoWork);
 
         await _rootCommand.InvokeAsync(args);
-        
+
         Log.CloseAndFlush();
     }
 
@@ -156,11 +157,12 @@ internal class Program
             .MinimumLevel.ControlledBy(levelSwitch);
 
         Log.Logger = conf.CreateLogger();
-        
+
         if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
         {
             Console.WriteLine();
-            Log.Fatal("Non-Windows platforms not supported due to the need to load ESI specific Windows libraries! Exiting...");
+            Log.Fatal(
+                "Non-Windows platforms not supported due to the need to load ESI specific Windows libraries! Exiting...");
             Console.WriteLine();
             Environment.Exit(0);
             return;
@@ -231,10 +233,10 @@ internal class Program
                 RecurseSubdirectories = true,
                 AttributesToSkip = 0
             };
-                        
+
             files2 =
-                Directory.EnumerateFileSystemEntries(d, "SRUDB.DAT",enumerationOptions);
-            
+                Directory.EnumerateFileSystemEntries(d, "SRUDB.DAT", enumerationOptions);
+
             f = files2.FirstOrDefault();
 
             if (f.IsNullOrEmpty())
@@ -243,11 +245,47 @@ internal class Program
                 return;
             }
 
-            Log.Information("Found SRUM database file '{F}'!", f);
+            string esentutlOutput = "";
+            try
+            {
+                var esentutlProcess = new Process
+                {
+                    StartInfo = new ProcessStartInfo
+                    {
+                        FileName = "esentutl.exe",
+                        Arguments = $"/mh \"{f}\"",
+                        RedirectStandardOutput = true,
+                        UseShellExecute = false,
+                        CreateNoWindow = true
+                    }
+                };
+                esentutlProcess.Start();
+                esentutlOutput = esentutlProcess.StandardOutput.ReadToEnd();
+                esentutlProcess.WaitForExit();
+
+                if (esentutlProcess.ExitCode != 0)
+                {
+                    Log.Warning("esentutl.exe did not run successfully. Exit code: {ExitCode}",
+                        esentutlProcess.ExitCode);
+                }
+
+                string state = Regex.Match(esentutlOutput, @"State:\s*(.*)").Groups[1].Value.Trim();
+                string formatVersion = Regex.Match(esentutlOutput, @"Format ulVersion:\s*.*\(.* (\d{4})\)").Groups[1].Value;
+                string engineVersion = Regex.Match(esentutlOutput, @"Engine ulVersion:\s*.*\(.* (\d{4})\)").Groups[1].Value;
+                
+                // if the Format Version is newer (aka larger) than the Engine Version, find a newer system to repair the SRUDB.dat file with. If Format Version is equal or older (aka smaller), then you should be able to repair the SRUDB.dat file on your system 
+
+                Log.Information("Found SRUM database file '{F}' (State: {State}, Format Version: {FormatVersion}, Engine Version: {EngineVersion})", f, state, formatVersion, engineVersion);
+                
+            }
+            catch (Exception ex)
+            {
+                Log.Error(ex, "An error occurred while running esentutl.exe");
+            }
             
             files2 =
-                Directory.EnumerateFileSystemEntries(d, "SOFTWARE",enumerationOptions);
-            
+                Directory.EnumerateFileSystemEntries(d, "SOFTWARE", enumerationOptions);
+
             r = files2.FirstOrDefault();
 
             if (r.IsNullOrEmpty())
@@ -258,8 +296,8 @@ internal class Program
             {
                 Log.Information("Found SOFTWARE hive '{R}'!", r);
             }
-            
-            #elif NET462 
+
+#elif NET462
             //kape mode, so find the files
             var ilter = new DirectoryEnumerationFilters();
             ilter.InclusionFilter = fsei =>
@@ -334,9 +372,6 @@ internal class Program
                 Log.Information("Found SOFTWARE hive '{R}'!", r);
             }
 #endif
-            
-            
-            
 
 
             Console.WriteLine();
@@ -346,14 +381,15 @@ internal class Program
         {
             Log.Information("Processing '{F}'...", f);
             sr = new Srum(f, r);
-            
+
             Console.WriteLine();
             Log.Information("Processing complete!");
             Console.WriteLine();
-            
+
             Log.Information("{EnergyUse} {EnergyUsagesCount:N0}", "Energy Usage count:".PadRight(30),
                 sr.EnergyUsages.Count);
-            Log.Information("{AppTimelineProviders} {AppTimelineProvidersCount:N0}", "AppTimelineProvider count:".PadRight(30),
+            Log.Information("{AppTimelineProviders} {AppTimelineProvidersCount:N0}",
+                "AppTimelineProvider count:".PadRight(30),
                 sr.TimelineProviders.Count);
             Log.Information("{vfuprovs} {vfuprovsCount:N0}", "vfuprov count:".PadRight(30),
                 sr.Vfuprovs.Count);
@@ -361,7 +397,7 @@ internal class Program
                 "App Resource Usage count:".PadRight(30), sr.AppResourceUseInfos.Count);
             Log.Information("{NetworkConnections} {NetworkConnectionsCount:N0}",
                 "Network Connection count:".PadRight(30), sr.NetworkConnections.Count);
-            Log.Information("{NetworkUsages} {NetworkUsagesCount}", "Network Usage count:".PadRight(30),
+            Log.Information("{NetworkUsages} {NetworkUsagesCount:N0}", "Network Usage count:".PadRight(30),
                 sr.NetworkUsages.Count);
             Log.Information("{PushNotifications} {PushNotificationsCount:N0}", "Push Notification count:".PadRight(30),
                 sr.PushNotifications.Count);
