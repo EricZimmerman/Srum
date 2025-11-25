@@ -23,7 +23,7 @@ using Serilog.Events;
 using ServiceStack;
 using SrumData;
 
-#if NET462
+#if NET472
 using Directory = Alphaleonis.Win32.Filesystem.Directory;
 using File = Alphaleonis.Win32.Filesystem.File;
 using Path = Alphaleonis.Win32.Filesystem.Path;
@@ -297,7 +297,7 @@ internal class Program
                 Log.Information("Found SOFTWARE hive '{R}'!", r);
             }
 
-#elif NET462
+#elif NET472
             //kape mode, so find the files
             var ilter = new DirectoryEnumerationFilters();
             ilter.InclusionFilter = fsei =>
