@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
+using System.CommandLine.Invocation;
 using System.CommandLine.NamingConventionBinder;
 using System.Diagnostics;
 using System.Globalization;
@@ -54,7 +55,7 @@ internal class Program
     private static readonly string BaseDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
 
     private static readonly string Header =
-        $"SrumECmd version {Assembly.GetExecutingAssembly().GetName().Version}" +
+        $"SrumECmd version {Assembly.GetExecutingAssembly().GetName().Version.ToString(3)}" +
         "\r\n\r\nAuthor: Eric Zimmerman (saericzimmerman@gmail.com)" +
         "\r\nhttps://github.com/EricZimmerman/Srum";
 
@@ -88,48 +89,66 @@ internal class Program
         _args = args;
 
         var csvOption = new Option<string>(
-            "--csv",
-            "Directory to save CSV formatted results to. Be sure to include the full path in double quotes")
+            "--csv")
         {
-            IsRequired = true
+            Description = "Directory to save CSV formatted results to. Be sure to include the full path in double quotes",
+          //  Required = true
+        };
+        
+        var fOpt = new Option<string>("-f")
+        {
+            Description = "SRUDB.dat file to parse",
+           // Required = true
+        };
+        
+        var softOpt = new Option<string>("-r")
+        {
+            Description = "SOFTWARE hive to process. This is optional, but recommended\r\n",
+        };
+        
+        var dirOpt = new Option<string>("-d")
+        {
+            Description = "Directory to recursively process, looking for SRUDB.dat and SOFTWARE hive. This mode is primarily used with KAPE so both SRUDB.dat and SOFTWARE hive can be located",
+        };
+        
+       var dtOpt = new Option<string>(
+            "--dt")
+        {
+            DefaultValueFactory = _ => "yyyy-MM-dd HH:mm:ss",
+           Description = "The custom date/time format to use when displaying time stamps. See https://goo.gl/CNVq0k for options\r\n"
+            
+        };
+
+        var debugOpt = new Option<bool>("--debug")
+        {
+            Description = "Show debug information during processing",
+            DefaultValueFactory = _ => false
+        };
+        var traceOpt = new Option<bool>("--trace")
+        {
+            Description = "Show trace information during processing",
+            DefaultValueFactory = _ => false
         };
 
         _rootCommand = new RootCommand
         {
-            new Option<string>(
-                "-f",
-                "SRUDB.dat file to parse"),
-            new Option<string>(
-                "-r",
-                "SOFTWARE hive to process. This is optional, but recommended\r\n"),
-
-            new Option<string>(
-                "-d",
-                "Directory to recursively process, looking for SRUDB.dat and SOFTWARE hive. This mode is primarily used with KAPE so both SRUDB.dat and SOFTWARE hive can be located"),
-
-            csvOption,
-
-            new Option<string>(
-                "--dt",
-                () => "yyyy-MM-dd HH:mm:ss",
-                "The custom date/time format to use when displaying time stamps. See https://goo.gl/CNVq0k for options\r\n"),
-
-            new Option<bool>(
-                "--debug",
-                () => false,
-                "Show debug information during processing"),
-
-            new Option<bool>(
-                "--trace",
-                () => false,
-                "Show trace information during processing")
+           fOpt,
+           softOpt,
+           dirOpt,
+          
+           csvOption,
+            dtOpt,
+            debugOpt,
+            traceOpt
+          
+        
         };
 
         _rootCommand.Description = Header + "\r\n\r\n" + Footer;
+        
+        _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(softOpt),result.GetValue(dirOpt),result.GetValue(csvOption),result.GetValue(dtOpt),result.GetValue(debugOpt),result.GetValue(traceOpt)));
 
-        _rootCommand.Handler = CommandHandler.Create<string, string, string, string, string, bool, bool>(DoWork);
-
-        await _rootCommand.InvokeAsync(args);
+        var foo = _rootCommand.Parse(args).InvokeAsync();
 
         Log.CloseAndFlush();
     }
@@ -170,13 +189,10 @@ internal class Program
 
         if (f.IsNullOrEmpty() && d.IsNullOrEmpty())
         {
-            var helpBld = new HelpBuilder(LocalizationResources.Instance, Console.WindowWidth);
+            var aaa = new CustomHelpAction(new HelpAction());
+            aaa.Invoke(_rootCommand.Parse(""));
 
-            var hc = new HelpContext(helpBld, _rootCommand, Console.Out);
-
-            helpBld.Write(hc);
-
-            Log.Warning("Either -f or -d is required. Exiting\r\n");
+            //Log.Warning("Either -f or -d is required. Exiting");
             return;
         }
 
@@ -195,13 +211,10 @@ internal class Program
 
         if (csv.IsNullOrEmpty())
         {
-            var helpBld = new HelpBuilder(LocalizationResources.Instance, Console.WindowWidth);
+            var aaa = new CustomHelpActionCsv(new HelpAction());
+            aaa.Invoke(_rootCommand.Parse(""));
 
-            var hc = new HelpContext(helpBld, _rootCommand, Console.Out);
-
-            helpBld.Write(hc);
-
-            Log.Warning("--csv is required. Exiting\r\n");
+            //Log.Warning("Either -f or -d is required. Exiting");
             return;
         }
 
@@ -668,4 +681,44 @@ internal class Program
             Log.Information("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
         }
     }
+    
+    private class CustomHelpAction : SynchronousCommandLineAction
+    {
+        private readonly HelpAction _defaultHelp;
+
+        public CustomHelpAction(HelpAction action)
+        {
+            _defaultHelp = action;
+        }
+
+        public override int Invoke(ParseResult parseResult)
+        {
+            var result = _defaultHelp.Invoke(parseResult);
+
+            Log.Warning("Either -f or -d is required. Exiting");
+
+            return result;
+        }
+    }
+    
+    private class CustomHelpActionCsv : SynchronousCommandLineAction
+    {
+        private readonly HelpAction _defaultHelp;
+
+        public CustomHelpActionCsv(HelpAction action)
+        {
+            _defaultHelp = action;
+        }
+
+        public override int Invoke(ParseResult parseResult)
+        {
+            var result = _defaultHelp.Invoke(parseResult);
+
+            Log.Warning("--csv is required. Exiting\r\n");
+
+            return result;
+        }
+    }
+    
 }
+

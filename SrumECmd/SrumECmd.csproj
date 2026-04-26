@@ -2,10 +2,10 @@
 
     <PropertyGroup>
         <OutputType>Exe</OutputType>
-        <TargetFrameworks>net472;net8.0;net9.0</TargetFrameworks>
+        <TargetFrameworks>net472;net9.0</TargetFrameworks>
         <LangVersion>10</LangVersion>
         <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
-        <Version>1.0.0</Version>
+        <Version>2026.5.0</Version>
         <Authors>Eric R. Zimmerman</Authors>
         <Description>Dumps SRUM data to CSV</Description>
         <Copyright>Eric R. Zimmerman</Copyright>
@@ -23,12 +23,12 @@
         <PackageReference Include="Fody" Version="6.9.3">
           <PrivateAssets>all</PrivateAssets>
         </PackageReference>
-        <PackageReference Include="Serilog" Version="4.3.0" />
+        <PackageReference Include="Serilog" Version="4.3.1" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
 
-        <PackageReference Include="ServiceStack.Text" Version="8.10.0" />
+        <PackageReference Include="ServiceStack.Text" Version="10.0.6" />
         
-	<PackageReference Include="System.CommandLine" Version="2.0.0-beta4.22272.1" />
+	<PackageReference Include="System.CommandLine" Version="2.0.7" />
         <PackageReference Include="System.CommandLine.NamingConventionBinder" Version="2.0.0-beta4.22272.1" />
     </ItemGroup>
 
