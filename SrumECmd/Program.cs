@@ -88,35 +88,34 @@ internal class Program
 
         _args = args;
 
-        var csvOption = new Option<string>(
+        var csvOpt = new Option<string>(
             "--csv")
         {
-            Description = "Directory to save CSV formatted results to. Be sure to include the full path in double quotes",
+            Description = "Directory to save CSV formatted results to. Be sure to include the full path in double quotes"
           //  Required = true
         };
         
         var fOpt = new Option<string>("-f")
         {
-            Description = "SRUDB.dat file to parse",
+            Description = "SRUDB.dat file to parse"
            // Required = true
         };
         
-        var softOpt = new Option<string>("-r")
+        var rOpt = new Option<string>("-r")
         {
-            Description = "SOFTWARE hive to process. This is optional, but recommended\r\n",
+            Description = "SOFTWARE hive to process. This is optional, but recommended\r\n"
         };
         
-        var dirOpt = new Option<string>("-d")
+        var dOpt = new Option<string>("-d")
         {
-            Description = "Directory to recursively process, looking for SRUDB.dat and SOFTWARE hive. This mode is primarily used with KAPE so both SRUDB.dat and SOFTWARE hive can be located",
+            Description = "Directory to recursively process, looking for SRUDB.dat and SOFTWARE hive. This mode is primarily used with KAPE so both SRUDB.dat and SOFTWARE hive can be located"
         };
         
        var dtOpt = new Option<string>(
             "--dt")
         {
-            DefaultValueFactory = _ => "yyyy-MM-dd HH:mm:ss",
-           Description = "The custom date/time format to use when displaying time stamps. See https://goo.gl/CNVq0k for options\r\n"
-            
+            Description = "The custom date/time format to use when displaying time stamps. See https://goo.gl/CNVq0k for options\r\n",
+            DefaultValueFactory = _ => "yyyy-MM-dd HH:mm:ss"
         };
 
         var debugOpt = new Option<bool>("--debug")
@@ -133,20 +132,18 @@ internal class Program
         _rootCommand = new RootCommand
         {
            fOpt,
-           softOpt,
-           dirOpt,
-          
-           csvOption,
-            dtOpt,
-            debugOpt,
-            traceOpt
-          
+           rOpt,
+           dOpt,
+           csvOpt,
+           dtOpt,
+           debugOpt,
+           traceOpt
         
         };
 
         _rootCommand.Description = Header + "\r\n\r\n" + Footer;
         
-        _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(softOpt),result.GetValue(dirOpt),result.GetValue(csvOption),result.GetValue(dtOpt),result.GetValue(debugOpt),result.GetValue(traceOpt)));
+        _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(rOpt),result.GetValue(dOpt),result.GetValue(csvOpt),result.GetValue(dtOpt),result.GetValue(debugOpt),result.GetValue(traceOpt)));
 
         var foo = _rootCommand.Parse(args).InvokeAsync();
 
