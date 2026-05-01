@@ -187,7 +187,7 @@ internal class Program
         if (f.IsNullOrEmpty() && d.IsNullOrEmpty())
         {
             var aaa = new CustomHelpAction(new HelpAction());
-            aaa.Invoke(_rootCommand.Parse(""));
+            aaa.Invoke(_rootCommand.Parse("Either -f or -d is required. Exiting"));
 
             //Log.Warning("Either -f or -d is required. Exiting");
             return;
@@ -208,8 +208,8 @@ internal class Program
 
         if (csv.IsNullOrEmpty())
         {
-            var aaa = new CustomHelpActionCsv(new HelpAction());
-            aaa.Invoke(_rootCommand.Parse(""));
+            var aaa = new CustomHelpAction(new HelpAction());
+            aaa.Invoke(_rootCommand.Parse("--csv is required. Exiting"));
 
             //Log.Warning("Either -f or -d is required. Exiting");
             return;
@@ -692,30 +692,12 @@ internal class Program
         {
             var result = _defaultHelp.Invoke(parseResult);
 
-            Log.Warning("Either -f or -d is required. Exiting");
+            Log.Warning("{Msg}", string.Join(" ",parseResult.Tokens));
 
             return result;
         }
     }
-    
-    private class CustomHelpActionCsv : SynchronousCommandLineAction
-    {
-        private readonly HelpAction _defaultHelp;
 
-        public CustomHelpActionCsv(HelpAction action)
-        {
-            _defaultHelp = action;
-        }
-
-        public override int Invoke(ParseResult parseResult)
-        {
-            var result = _defaultHelp.Invoke(parseResult);
-
-            Log.Warning("--csv is required. Exiting\r\n");
-
-            return result;
-        }
-    }
     
 }
 
