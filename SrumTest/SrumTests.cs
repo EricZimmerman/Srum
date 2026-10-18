@@ -141,7 +141,7 @@ public class SrumTests
         //what was flushed to the database before the dirty shutdown varies by machine (none here, some on CI runners), so
         //the repaired copy may have some rows: only the synthetic bad EndTime may be reported
         srum.Warnings.Should().Contain(w => w.Contains("esentutl /p"));
-        srum.ParseErrors.Should().OnlyContain(e => e.Contains("EndTime"));
+        srum.ParseErrors.Where(e => !e.Contains("EndTime")).Should().BeEmpty();
     }
 
     [Test]
