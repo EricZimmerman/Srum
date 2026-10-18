@@ -4,21 +4,21 @@ A SRUM parser!
 
 ## Command Line Interface
 
-    SrumECmd version 0.5.0.1
+    SrumECmd version 2026.10.0
 
     Author: Eric Zimmerman (saericzimmerman@gmail.com)
     https://github.com/EricZimmerman/Srum
 
-            d               Directory to recursively process, looking for SRUDB.dat and SOFTWARE hive. This mode is primarily used with KAPE so both SRUDB.dat and SOFTWARE hive can be located
-            f               SRUDB.dat file to process. Either this or -d is required
-            r               SOFTWARE hive to process. This is optional, but recommended
+            -d              Directory to recursively process, looking for SRUDB.dat and SOFTWARE hive. This mode is primarily used with KAPE so both SRUDB.dat and SOFTWARE hive can be located
+            -f              SRUDB.dat file to process. Either this or -d is required
+            -r              SOFTWARE hive to process. This is optional, but recommended
 
-            csv             Directory to save CSV formatted results to. Be sure to include the full path in double quotes
+            --csv           Directory to save CSV formatted results to. Be sure to include the full path in double quotes
 
-            dt              The custom date/time format to use when displaying time stamps. Default is: yyyy-MM-dd HH:mm:ss.fffffff
+            --dt            The custom date/time format to use when displaying time stamps. Default is: yyyy-MM-dd HH:mm:ss
 
-            debug           Show debug information during processing
-            trace           Show trace information during processing
+            --debug         Show debug information during processing
+            --trace         Show trace information during processing
 
 
     Examples: SrumECmd.exe -f "C:\Temp\SRUDB.dat" -r "C:\Temp\SOFTWARE" --csv "C:\Temp\"
@@ -27,55 +27,30 @@ A SRUM parser!
 
               Short options (single letter) are prefixed with a single dash. Long commands are prefixed with two dashes
 
-    Either -f or -d is required. Exiting
+Exit codes: 0 on success; 1 for invalid arguments, a database that can't be read, or an export that failed.
 
-## Documentation
+Windows only (the database is read with Windows' ESE engine, `esent.dll`).
 
-N/A
+## Output
 
-## Repairing the SRUDB.dat
+One CSV per provider table: `AppResourceUseInfo`, `AppTimelineProvider`, `EnergyUsage`, `NetworkConnections`, `NetworkUsages`, `PushNotifications` and `vfuprov`, always written. Since 2026.10.0:
 
-When you run SrumECmd, you will likely encounter an error message that states the file is dirty. 
+- `AppTimelineProvider` has the seconds in focus, in the foreground, with user, keyboard and mouse input, with the display required and with audio in and out (`InFocusS`, `PsmForegroundS`, `UserInputS`, `KeyboardInputS`, `MouseInputS`, `DisplayRequiredS`, `AudioInS`, `AudioOutS`), after the existing columns.
+- The tables seen on Server 2022 are exported when they have rows: `ProcessorTime`, `SizeInBytes`, `TotalUsed` and `NetworkBytes`. What they measure is in `ExeInfo` (for example `Total`, a volume, a network adapter).
+- `--dt` applies to the `Timestamp` columns too.
 
-    Command line: -d M:\Forensics\SrumECmdTest\tout -k --csv M:\Forensics\SrumECmdTest\mout\SystemActivity
-    Found SRUM database file 'M:\Forensics\SrumECmdTest\tout\C\Windows\System32\SRU\SRUDB.dat'!
-    Found SOFTWARE hive 'M:\Forensics\SrumECmdTest\tout\C\Windows\System32\config\software'!
-    Processing 'M:\Forensics\SrumECmdTest\tout\C\Windows\System32\SRU\SRUDB.dat'...
-    Error processing file! Message: Object reference not set to an instance of an object..
-    This almost always means the database is dirty and must be repaired. This can be verified by running 'esentutl.exe /mh SRUDB.dat' and examining the 'State' property
-    If the database is dirty, **make a copy of your files**, ensure all files in the directory are not Read-only, open a PowerShell session as an admin, and repair by using the following commands (change directories to the location of SRUDB.dat first):
-    'esentutl.exe /r sru /i'
-    'esentutl.exe /p SRUDB.dat'
-    Executed 1 processor in 0.9046 seconds
+## Dirty databases
 
-    Total execution time: 6.5490 seconds
-    
-Follow these steps to repair the `SRUDB.dat` so you can run SrumECmd.exe again. First, follow the steps SrumECmd provides:
-1. Make a copy of the files within the `.\SRU` directory
+`SRUDB.dat` is never opened where it is: SrumECmd copies it, with its transaction logs (`SRU*.log`, `SRU.chk`, `*.jrs`), to a temporary folder and works on the copy. Nothing next to `SRUDB.dat` changes, so it can be read-only.
 
-2. Ensure the `.\SRU` directory itself is not Read Only. This can be done by right clicking on the directory itself, Properties, and unchecking Read Only if it is checked:
+A `SRUDB.dat` collected from a running system is usually dirty. SrumECmd handles this by itself, on the copy:
 
-![SRUFolderReadOnlyExample](Pictures/SRUFolderReadOnlyExample.gif)
+1. The transaction logs, when they were collected, are replayed into the copy (what `esentutl.exe /r sru /i` did by hand; the old way could also fail with "Access denied", as the logs name the live database's path).
+2. A copy that is still dirty (its logs are missing) is repaired with `esentutl.exe /p`. What only the missing logs had is lost; SrumECmd says when this was done.
 
-3. Open a PowerShell session as an Administrator in the directory where your copied files reside
+There is no need to repair anything by hand any more. `esentutl.exe /mh SRUDB.dat` shows a database's state.
 
-4. Execute this command within the PowerShell Admin session: 
-
-    `esentutl.exe /r sru /i`
-
-![SRUDBFirstRepairCommand](Pictures/SRUDBFirstRepairCommand.gif)
-
-5. Execute this command within the PowerShell Admin session: 
-
-    `esentutl.exe /p SRUDB.dat`
-    
-![SRUDBSecondRepairCommand](Pictures/SRUDBSecondRepairCommand.gif)
-
-6. Try running SrumECmd again against the location where these repaired files reside:
-
-![SrumECmdParsingSuccessExample](Pictures/SrumECmdParsingSuccessExample.png)
-
-7. Examine output in Timeline Explorer!
+Examine the output in Timeline Explorer!
 
 ![SrumECmdCSVOutput](Pictures/SrumECmdCSVOutput.jpg)
 

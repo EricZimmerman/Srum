@@ -3,7 +3,6 @@ using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
 using System.CommandLine.Invocation;
-using System.CommandLine.NamingConventionBinder;
 using System.Diagnostics;
 using System.Globalization;
 using System.IO;
@@ -17,7 +16,6 @@ using System.Threading.Tasks;
 using Alphaleonis.Win32.Filesystem;
 using CsvHelper;
 using Exceptionless;
-using Microsoft.Isam.Esent.Interop;
 using Serilog;
 using Serilog.Core;
 using Serilog.Events;
@@ -36,19 +34,6 @@ using File = System.IO.File;
 
 
 namespace SrumECmd;
-
-public class ApplicationArguments
-{
-    public string FileDb { get; set; }
-    public string FileReg { get; set; }
-    public string Directory { get; set; }
-    public string CsvDirectory { get; set; }
-
-    public string DateTimeFormat { get; set; }
-
-    public bool Debug { get; set; }
-    public bool Trace { get; set; }
-}
 
 internal class Program
 {
@@ -82,7 +67,7 @@ internal class Program
         return principal.IsInRole(WindowsBuiltInRole.Administrator);
     }
 
-    private static async Task Main(string[] args)
+    private static async Task<int> Main(string[] args)
     {
         ExceptionlessClient.Default.Startup("wPXTiiouhEbK0s19lCgjiDThpfrW0ODU8RskdPEk");
 
@@ -145,12 +130,15 @@ internal class Program
         
         _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(rOpt),result.GetValue(dOpt),result.GetValue(csvOpt),result.GetValue(dtOpt),result.GetValue(debugOpt),result.GetValue(traceOpt)));
 
-        var foo = _rootCommand.Parse(args).InvokeAsync();
+        var exitCode = await _rootCommand.Parse(args).InvokeAsync();
 
         Log.CloseAndFlush();
+
+        return exitCode;
     }
 
-    private static void DoWork(string f, string r, string d, string csv, string dt, bool debug, bool trace)
+    /// <returns>0 on success; 1 for invalid arguments, a database that could not be read or an export that failed</returns>
+    private static int DoWork(string f, string r, string d, string csv, string dt, bool debug, bool trace)
     {
         var levelSwitch = new LoggingLevelSwitch();
 
@@ -178,10 +166,9 @@ internal class Program
         {
             Console.WriteLine();
             Log.Fatal(
-                "Non-Windows platforms not supported due to the need to load ESI specific Windows libraries! Exiting...");
+                "Non-Windows platforms not supported due to the need to load ESE specific Windows libraries! Exiting...");
             Console.WriteLine();
-            Environment.Exit(0);
-            return;
+            return 1;
         }
 
         if (f.IsNullOrEmpty() && d.IsNullOrEmpty())
@@ -189,21 +176,26 @@ internal class Program
             var aaa = new CustomHelpAction(new HelpAction());
             aaa.Invoke(_rootCommand.Parse("Either -f or -d is required. Exiting"));
 
-            //Log.Warning("Either -f or -d is required. Exiting");
-            return;
+            return 1;
         }
 
 
         if (f.IsNullOrEmpty() == false && !File.Exists(f))
         {
             Log.Warning("File '{File}' not found. Exiting", f);
-            return;
+            return 1;
         }
 
         if (d.IsNullOrEmpty() == false && !Directory.Exists(d))
         {
             Log.Warning("Directory '{D}' not found. Exiting", d);
-            return;
+            return 1;
+        }
+
+        if (r.IsNullOrEmpty() == false && !File.Exists(r))
+        {
+            Log.Warning("SOFTWARE hive '{R}' not found. Exiting", r);
+            return 1;
         }
 
         if (csv.IsNullOrEmpty())
@@ -211,8 +203,7 @@ internal class Program
             var aaa = new CustomHelpAction(new HelpAction());
             aaa.Invoke(_rootCommand.Parse("--csv is required. Exiting"));
 
-            //Log.Warning("Either -f or -d is required. Exiting");
-            return;
+            return 1;
         }
 
         Log.Information("{Header}", Header);
@@ -252,7 +243,7 @@ internal class Program
             if (f.IsNullOrEmpty())
             {
                 Log.Warning("Did not locate any files named 'SRUDB.dat'! Exiting");
-                return;
+                return 1;
             }
 
             string esentutlOutput = "";
@@ -342,7 +333,7 @@ internal class Program
             if (f.IsNullOrEmpty())
             {
                 Log.Warning("Did not locate any files named 'SRUDB.dat'! Exiting");
-                return;
+                return 1;
             }
 
             Log.Information("Found SRUM database file '{F}'!", f);
@@ -390,6 +381,7 @@ internal class Program
         try
         {
             Log.Information("Processing '{F}'...", f);
+            //read from a copy in a temporary folder, with its logs replayed (or repaired with esentutl /p): nothing next to it changes
             sr = new Srum(f, r);
 
             Console.WriteLine();
@@ -411,274 +403,191 @@ internal class Program
                 sr.NetworkUsages.Count);
             Log.Information("{PushNotifications} {PushNotificationsCount:N0}", "Push Notification count:".PadRight(30),
                 sr.PushNotifications.Count);
+
+            //the providers seen on Server 2022 (Issue #15), when present
+            foreach (var (label, count) in new[]
+                     {
+                         ("ProcessorTime count:", sr.ProcessorTimes.Count), ("SizeInBytes count:", sr.SizeInBytesInfos.Count),
+                         ("TotalUsed count:", sr.TotalUsedInfos.Count), ("NetworkBytes count:", sr.NetworkBytesInfos.Count)
+                     })
+            {
+                if (count > 0)
+                {
+                    Log.Information("{Label} {Count:N0}", label.PadRight(30), count);
+                }
+            }
+
             Console.WriteLine();
         }
         catch (Exception e)
         {
             Log.Error(e,
-                "Error processing file! Message: {Message}.\r\n\r\nThis almost always means the database is dirty and must be repaired. This can be verified by running 'esentutl.exe /mh SRUDB.dat' and examining the 'State' property",
+                "Error processing file! Message: {Message}.\r\n\r\nThe transaction logs were replayed into a copy of the database and, if it was still dirty, the copy was repaired with 'esentutl.exe /p', so the database is probably damaged beyond repair. 'esentutl.exe /mh SRUDB.dat' shows its state",
                 e.Message);
             Console.WriteLine();
-            Log.Information(
-                "If the database is dirty, **make a copy of your files**, ensure all files in the directory are not Read-only, open a PowerShell session as an admin, and repair by using the following commands (change directories to the location of SRUDB.dat first):\r\n\r\n'esentutl.exe /r sru /i'\r\n'esentutl.exe /p SRUDB.dat'\r\n\r\n");
-            Environment.Exit(0);
+            return 1;
         }
 
-        if (csv.IsNullOrEmpty() == false)
+        if (Directory.Exists(csv) == false)
         {
-            if (Directory.Exists(csv) == false)
-            {
-                Log.Information(
-                    "Path to '{Csv}' doesn't exist. Creating...", csv);
+            Log.Information(
+                "Path to '{Csv}' doesn't exist. Creating...", csv);
 
-                try
+            try
+            {
+                Directory.CreateDirectory(csv);
+            }
+            catch (Exception)
+            {
+                Log.Fatal(
+                    "Unable to create directory '{Csv}'. Does a file with the same name exist? Exiting", csv);
+                return 1;
+            }
+        }
+
+        Log.Information("CSV output will be saved to '{Csv}'\r\n", csv);
+
+        var exportFailed = false;
+
+        //(Timestamp ignored --dt: it was always yyyy-MM-dd HH:mm:ss, the --dt default)
+        exportFailed |= !ExportCsv(sr.EnergyUsages.Values, csv, ts, "EnergyUsage", EnergyUsage.TableName, map =>
+        {
+            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
+            map.Map(t => t.EventTimestamp).Convert(t => $"{t.Value.EventTimestamp?.ToString(dt)}");
+        });
+
+        exportFailed |= !ExportCsv(sr.TimelineProviders.Values, csv, ts, "AppTimelineProvider", TimelineProvider.TableName, map =>
+        {
+            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
+            map.Map(t => t.EndTime).Convert(t => t.Value.EndTime.ToString(dt));
+        });
+
+        exportFailed |= !ExportCsv(sr.Vfuprovs.Values, csv, ts, "vfuprov", Vfuprov.TableName, map =>
+        {
+            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
+            map.Map(t => t.EndTime).Convert(t => t.Value.EndTime.ToString(dt));
+            map.Map(t => t.StartTime).Convert(t => t.Value.StartTime.ToString(dt));
+        });
+
+        exportFailed |= !ExportCsv(sr.AppResourceUseInfos.Values, csv, ts, "AppResourceUseInfo", AppResourceUseInfo.TableName,
+            map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
+
+        exportFailed |= !ExportCsv(sr.NetworkConnections.Values, csv, ts, "NetworkConnections", NetworkConnection.TableName, map =>
+        {
+            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
+            map.Map(t => t.ConnectStartTime).Convert(t => t.Value.ConnectStartTime.ToString(dt));
+        });
+
+        exportFailed |= !ExportCsv(sr.NetworkUsages.Values, csv, ts, "NetworkUsages", NetworkUsage.TableName,
+            map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
+
+        exportFailed |= !ExportCsv(sr.PushNotifications.Values, csv, ts, "PushNotifications", PushNotification.TableName,
+            map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
+
+        //the providers seen on Server 2022 (Issue #15): only when there are rows, as most systems don't have them
+        if (sr.ProcessorTimes.Count > 0)
+        {
+            exportFailed |= !ExportCsv(sr.ProcessorTimes.Values, csv, ts, "ProcessorTime", ProcessorTimeInfo.TableName,
+                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
+        }
+
+        if (sr.SizeInBytesInfos.Count > 0)
+        {
+            exportFailed |= !ExportCsv(sr.SizeInBytesInfos.Values, csv, ts, "SizeInBytes", SizeInBytesInfo.TableName,
+                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
+        }
+
+        if (sr.TotalUsedInfos.Count > 0)
+        {
+            exportFailed |= !ExportCsv(sr.TotalUsedInfos.Values, csv, ts, "TotalUsed", TotalUsedInfo.TableName,
+                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
+        }
+
+        if (sr.NetworkBytesInfos.Count > 0)
+        {
+            exportFailed |= !ExportCsv(sr.NetworkBytesInfos.Values, csv, ts, "NetworkBytes", NetworkBytesInfo.TableName,
+                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
+        }
+
+        sw.Stop();
+
+        if (sr.ParseErrors.Count > 0)
+        {
+            Log.Warning("{Count:N0} problem(s) found while reading the database (everything else was exported):", sr.ParseErrors.Count);
+            foreach (var parseError in sr.ParseErrors.Take(50))
+            {
+                Log.Warning("\t{ParseError}", parseError);
+            }
+
+            if (sr.ParseErrors.Count > 50)
+            {
+                Log.Warning("\t... and {Count:N0} more (use --debug to see them all as they happen)", sr.ParseErrors.Count - 50);
+            }
+
+            Console.WriteLine();
+        }
+
+        Log.Information("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
+
+        return exportFailed ? 1 : 0;
+    }
+
+    private static int Depth(Type type)
+    {
+        var depth = 0;
+        for (var t = type; t?.BaseType != null; t = t.BaseType)
+        {
+            depth += 1;
+        }
+
+        return depth;
+    }
+
+    /// <summary>
+    ///     One CSV (written even when it has no rows, as before)
+    /// </summary>
+    private static bool ExportCsv<T>(IEnumerable<T> records, string csv, DateTimeOffset ts, string name, string tableName,
+        Action<CsvHelper.Configuration.ClassMap<T>> configure)
+    {
+        try
+        {
+            Log.Debug("Dumping {Name} table '{TableName}'", name, tableName);
+
+            var outFile = Path.Combine(csv, $"{ts:yyyyMMddHHmmss}_SrumECmd_{name}_Output.csv");
+
+            //(the writers were never closed)
+            using var swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
+            using var csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
+
+            var map = csvWriter.Context.AutoMap<T>();
+            configure(map);
+
+            //SrumRecord's columns (Id, Timestamp, ExeInfo, ...) first, as in the other CSVs, then the table's own
+            if (map.MemberMaps.Select(m => m.Data.Member?.DeclaringType).Distinct().Count() > 1)
+            {
+                var ordered = map.MemberMaps.OrderBy(m => Depth(m.Data.Member?.DeclaringType)).ToList();
+                for (var i = 0; i < ordered.Count; i++)
                 {
-                    Directory.CreateDirectory(csv);
-                }
-                catch (Exception)
-                {
-                    Log.Fatal(
-                        "Unable to create directory '{Csv}'. Does a file with the same name exist? Exiting", csv);
-                    return;
+                    ordered[i].Data.Index = i;
+                    ordered[i].Data.IsIndexSet = true;
                 }
             }
 
-
-            string outName;
-
-            string outFile;
-
-            Log.Information("CSV output will be saved to '{Csv}'\r\n", csv);
-
-            StreamWriter swCsv;
-            CsvWriter csvWriter;
-            try
-            {
-                Log.Debug("Dumping Energy Usage tables '{TableName}'", EnergyUsage.TableName);
-
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_EnergyUsage_Output.csv";
-
-                outFile = Path.Combine(csv, outName);
-
-                swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-
-                csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
-
-                var foo = csvWriter.Context.AutoMap<EnergyUsage>();
-                foo.Map(t => t.Timestamp).Convert(t =>
-                    $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                foo.Map(t => t.EventTimestamp).Convert(t =>
-                    $"{t.Value.EventTimestamp?.ToString(dt)}");
-
-                csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<EnergyUsage>();
-                csvWriter.NextRecord();
-
-                csvWriter.WriteRecords(sr.EnergyUsages.Values);
-
-                csvWriter.Flush();
-                swCsv.Flush();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error exporting 'EnergyUsage' data! Error: {Message}", e.Message);
-            }
-
-
-            try
-            {
-                Log.Debug("Dumping AppTimelineProvider table '{TableName}'", TimelineProvider.TableName);
-
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_AppTimelineProvider_Output.csv";
-
-                outFile = Path.Combine(csv, outName);
-
-                swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-
-                csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
-
-                var foo = csvWriter.Context.AutoMap<TimelineProvider>();
-                foo.Map(t => t.Timestamp).Convert(t =>
-                    $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                foo.Map(t => t.EndTime).Convert(t =>
-                    $"{t.Value.EndTime.ToString(dt)}");
-
-                csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<TimelineProvider>();
-                csvWriter.NextRecord();
-
-                csvWriter.WriteRecords(sr.TimelineProviders.Values);
-
-                csvWriter.Flush();
-                swCsv.Flush();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error exporting 'AppTimelineProvider' data! Error: {Message}", e.Message);
-            }
-
-            try
-            {
-                Log.Debug("Dumping vfuprov table '{TableName}'", Vfuprov.TableName);
-
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_vfuprov_Output.csv";
-
-                outFile = Path.Combine(csv, outName);
-
-                swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-
-                csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
-
-                var foo = csvWriter.Context.AutoMap<Vfuprov>();
-                foo.Map(t => t.Timestamp).Convert(t =>
-                    $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                foo.Map(t => t.EndTime).Convert(t =>
-                    $"{t.Value.EndTime.ToString(dt)}");
-                foo.Map(t => t.StartTime).Convert(t =>
-                    $"{t.Value.StartTime.ToString(dt)}");
-
-                csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<Vfuprov>();
-                csvWriter.NextRecord();
-
-                csvWriter.WriteRecords(sr.Vfuprovs.Values);
-
-                csvWriter.Flush();
-                swCsv.Flush();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error exporting 'vfuprov' data! Error: {Message}", e.Message);
-            }
-
-            try
-            {
-                Log.Debug("Dumping App Resource Use Info table '{TableName}'", AppResourceUseInfo.TableName);
-
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_AppResourceUseInfo_Output.csv";
-
-                outFile = Path.Combine(csv, outName);
-
-                swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-
-                csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
-
-                var foo = csvWriter.Context.AutoMap<AppResourceUseInfo>();
-                foo.Map(t => t.Timestamp).Convert(t =>
-                    $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
-
-                csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<AppResourceUseInfo>();
-                csvWriter.NextRecord();
-
-                csvWriter.WriteRecords(sr.AppResourceUseInfos.Values);
-
-                csvWriter.Flush();
-                swCsv.Flush();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error exporting 'AppResourceUseInfo' data! Error: {Message}", e.Message);
-            }
-
-            try
-            {
-                Log.Debug("Dumping Network Connection table '{TableName}'", NetworkConnection.TableName);
-
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_NetworkConnections_Output.csv";
-
-                outFile = Path.Combine(csv, outName);
-
-                swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-
-                csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
-
-                var foo = csvWriter.Context.AutoMap<NetworkConnection>();
-                foo.Map(t => t.Timestamp).Convert(t =>
-                    $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
-                foo.Map(t => t.ConnectStartTime).Convert(t =>
-                    $"{t.Value.ConnectStartTime.ToString(dt)}");
-
-                csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<NetworkConnection>();
-                csvWriter.NextRecord();
-
-                csvWriter.WriteRecords(sr.NetworkConnections.Values);
-
-                csvWriter.Flush();
-                swCsv.Flush();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error exporting 'NetworkConnection' data! Error: {Message}", e.Message);
-            }
-
-            try
-            {
-                Log.Debug("Dumping Network Usage table '{TableName}'", NetworkUsage.TableName);
-
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_NetworkUsages_Output.csv";
-
-                outFile = Path.Combine(csv, outName);
-
-                swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-
-                csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
-
-                var foo = csvWriter.Context.AutoMap<NetworkUsage>();
-                foo.Map(t => t.Timestamp).Convert(t =>
-                    $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
-
-                csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<NetworkUsage>();
-                csvWriter.NextRecord();
-
-                csvWriter.WriteRecords(sr.NetworkUsages.Values);
-
-                csvWriter.Flush();
-                swCsv.Flush();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error exporting 'NetworkUsage' data! Error: {Message}", e.Message);
-            }
-
-            try
-            {
-                Log.Debug("Dumping Push Notification table '{TableName}'", PushNotification.TableName);
-
-                outName = $"{ts:yyyyMMddHHmmss}_SrumECmd_PushNotifications_Output.csv";
-
-                outFile = Path.Combine(csv, outName);
-
-                swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-
-                csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
-
-                var foo = csvWriter.Context.AutoMap<PushNotification>();
-                foo.Map(t => t.Timestamp).Convert(t =>
-                    $"{t.Value.Timestamp:yyyy-MM-dd HH:mm:ss}");
-
-                csvWriter.Context.RegisterClassMap(foo);
-                csvWriter.WriteHeader<PushNotification>();
-                csvWriter.NextRecord();
-
-                csvWriter.WriteRecords(sr.PushNotifications.Values);
-
-                csvWriter.Flush();
-                swCsv.Flush();
-            }
-            catch (Exception e)
-            {
-                Log.Error(e, "Error exporting 'PushNotification' data! Error: {Message}", e.Message);
-            }
-
-            sw.Stop();
-
-            Log.Information("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
+            csvWriter.Context.RegisterClassMap(map);
+            csvWriter.WriteHeader<T>();
+            csvWriter.NextRecord();
+
+            csvWriter.WriteRecords(records);
+
+            return true;
+        }
+        catch (Exception e)
+        {
+            Log.Error(e, "Error exporting '{Name}' data! Error: {Message}", name, e.Message);
+            return false;
         }
     }
-    
+
     private class CustomHelpAction : SynchronousCommandLineAction
     {
         private readonly HelpAction _defaultHelp;
