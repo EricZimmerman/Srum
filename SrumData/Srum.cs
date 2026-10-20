@@ -1245,7 +1245,17 @@ public class Srum
     /// </summary>
     /// <exception cref="FileNotFoundException">A file does not exist</exception>
     /// <exception cref="Exception">The database can't be opened, even from a repaired copy</exception>
-    public Srum(string fileName, string softwareHive)
+    public Srum(string fileName, string softwareHive) : this(fileName, softwareHive, null)
+    {
+    }
+
+    /// <summary>
+    ///     As <see cref="Srum(string, string)" />, with the copy made in a new folder in <paramref name="tempDirectory" />
+    ///     (which must exist; null: the system's temporary folder), deleted when done
+    /// </summary>
+    /// <exception cref="FileNotFoundException">A file does not exist</exception>
+    /// <exception cref="Exception">The database can't be opened, even from a repaired copy</exception>
+    public Srum(string fileName, string softwareHive, string tempDirectory)
     {
         if (File.Exists(fileName) == false)
         {
@@ -1295,7 +1305,7 @@ public class Srum
         var full = Path.GetFullPath(fileName);
 
         Log.Debug("Copying '{FileName}' and its logs to a temporary folder", full);
-        using var ws = EseWorkspace.Create(Path.GetDirectoryName(full), new[] {full}, "SRU", AddWarning);
+        using var ws = EseWorkspace.Create(Path.GetDirectoryName(full), new[] {full}, "SRU", AddWarning, tempDirectory);
 
         var copy = Path.Combine(ws.WorkDirectory, Path.GetFileName(full));
         var dbid = ws.OpenDatabase(copy);
@@ -1721,7 +1731,13 @@ public class Srum
     /// <summary>
     ///     Writes the tables and columns of an ESE database to the log (read from a copy)
     /// </summary>
-    public static void DumpTableInfo(string fileName)
+    public static void DumpTableInfo(string fileName) => DumpTableInfo(fileName, null);
+
+    /// <summary>
+    ///     As <see cref="DumpTableInfo(string)" />, with the copy made in a new folder in <paramref name="tempDirectory" />
+    ///     (null: the system's temporary folder)
+    /// </summary>
+    public static void DumpTableInfo(string fileName, string tempDirectory)
     {
         if (File.Exists(fileName) == false)
         {
@@ -1729,7 +1745,7 @@ public class Srum
         }
 
         var full = Path.GetFullPath(fileName);
-        using var ws = EseWorkspace.Create(Path.GetDirectoryName(full), new[] {full}, "SRU", m => Log.Warning("{Message}", m));
+        using var ws = EseWorkspace.Create(Path.GetDirectoryName(full), new[] {full}, "SRU", m => Log.Warning("{Message}", m), tempDirectory);
         var copy = Path.Combine(ws.WorkDirectory, Path.GetFileName(full));
         var dbid = ws.OpenDatabase(copy);
 

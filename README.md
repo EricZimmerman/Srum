@@ -16,6 +16,7 @@ A SRUM parser!
             --csv           Directory to save CSV formatted results to. Be sure to include the full path in double quotes
 
             --dt            The custom date/time format to use when displaying time stamps. Default is: yyyy-MM-dd HH:mm:ss
+            --temp          Folder for the temporary copy of the SRUM database and its transaction logs, which is opened instead of the evidence and deleted when done. Default: a Temp folder next to SrumECmd. A folder that isn't there is created, and removed again when done. If that folder can't be written to, SrumECmd stops: give a writable folder with --temp
 
             --debug         Show debug information during processing
             --trace         Show trace information during processing
@@ -41,7 +42,7 @@ One CSV per provider table: `AppResourceUseInfo`, `AppTimelineProvider`, `Energy
 
 ## Dirty databases
 
-`SRUDB.dat` is never opened where it is: SrumECmd copies it, with its transaction logs (`SRU*.log`, `SRU.chk`, `*.jrs`), to a temporary folder and works on the copy. Nothing next to `SRUDB.dat` changes, so it can be read-only.
+`SRUDB.dat` is never opened where it is: SrumECmd copies it, with its transaction logs (`SRU*.log`, `SRU.chk`, `*.jrs`), to a temporary folder and works on the copy. Nothing next to `SRUDB.dat` changes, so it can be read-only. The temporary folder is `--temp`, or by default a `Temp` folder next to SrumECmd (never the user's `%TEMP%`); the copy is deleted when done. If that folder can't be written to, SrumECmd stops and asks for `--temp`.
 
 A `SRUDB.dat` collected from a running system is usually dirty. SrumECmd handles this by itself, on the copy:
 

@@ -103,6 +103,11 @@ internal class Program
             DefaultValueFactory = _ => "yyyy-MM-dd HH:mm:ss"
         };
 
+        var tempOpt = new Option<string>("--temp")
+        {
+            Description = TempFolder.Help
+        };
+
         var debugOpt = new Option<bool>("--debug")
         {
             Description = "Show debug information during processing",
@@ -121,6 +126,7 @@ internal class Program
            dOpt,
            csvOpt,
            dtOpt,
+           tempOpt,
            debugOpt,
            traceOpt
         
@@ -128,7 +134,7 @@ internal class Program
 
         _rootCommand.Description = Header + "\r\n\r\n" + Footer;
         
-        _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(rOpt),result.GetValue(dOpt),result.GetValue(csvOpt),result.GetValue(dtOpt),result.GetValue(debugOpt),result.GetValue(traceOpt)));
+        _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(rOpt),result.GetValue(dOpt),result.GetValue(csvOpt),result.GetValue(dtOpt),result.GetValue(tempOpt),result.GetValue(debugOpt),result.GetValue(traceOpt)));
 
         var exitCode = await _rootCommand.Parse(args).InvokeAsync();
 
@@ -138,7 +144,7 @@ internal class Program
     }
 
     /// <returns>0 on success; 1 for invalid arguments, a database that could not be read or an export that failed</returns>
-    private static int DoWork(string f, string r, string d, string csv, string dt, bool debug, bool trace)
+    private static int DoWork(string f, string r, string d, string csv, string dt, string temp, bool debug, bool trace)
     {
         var levelSwitch = new LoggingLevelSwitch();
 
@@ -378,11 +384,27 @@ internal class Program
             Console.WriteLine();
         }
 
+        //the database is read from a copy, made in --temp or Temp next to SrumECmd (never the user's %TEMP%)
+        var tempFolder = TempFolder.Prepare(temp, out var tempCreated, out var tempError);
+        if (tempFolder == null)
+        {
+            Log.Error("The folder for the temporary copy of the database can't be written to ({Error}). Give one with --temp. Exiting", tempError);
+            Console.WriteLine();
+            return 1;
+        }
+
         try
         {
             Log.Information("Processing '{F}'...", f);
-            //read from a copy in a temporary folder, with its logs replayed (or repaired with esentutl /p): nothing next to it changes
-            sr = new Srum(f, r);
+            //read from a copy in the temporary folder, with its logs replayed (or repaired with esentutl /p): nothing next to it changes
+            try
+            {
+                sr = new Srum(f, r, tempFolder);
+            }
+            finally
+            {
+                TempFolder.RemoveIfEmpty(tempFolder, tempCreated);
+            }
 
             Console.WriteLine();
             Log.Information("Processing complete!");

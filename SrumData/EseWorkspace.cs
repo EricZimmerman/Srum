@@ -44,10 +44,11 @@ namespace SrumData
         /// <param name="databases">Full paths of the databases to copy</param>
         /// <param name="baseName">ESE's three-letter base name of the log files: Svc (UAL), SRU (SRUM)</param>
         /// <param name="warning">Gets what was done to the copies (replay failed, repaired)</param>
+        /// <param name="tempDirectory">Where the copies' folder is made (it must exist; null: the system's temp folder)</param>
         public static EseWorkspace Create(string sourceDirectory, IEnumerable<string> databases, string baseName,
-            Action<string> warning)
+            Action<string> warning, string tempDirectory = null)
         {
-            var work = Path.Combine(Path.GetTempPath(), $"{typeof(EseWorkspace).Namespace}-{Guid.NewGuid():N}");
+            var work = Path.Combine(tempDirectory ?? Path.GetTempPath(), $"{typeof(EseWorkspace).Namespace}-{Guid.NewGuid():N}");
             var logs = Path.Combine(work, "logs");
             Directory.CreateDirectory(logs);
 
