@@ -1238,6 +1238,30 @@ public class Srum
     public List<string> Warnings { get; } = new();
 
     /// <summary>
+    ///     True when the SOFTWARE hive could not be read at all because it could not be accessed (in use by another
+    ///     process, access denied, IO errors). The problem is also in <see cref="ParseErrors" />, as for a damaged hive, which
+    ///     leaves this false
+    /// </summary>
+    public bool SoftwareHiveNotAccessed { get; private set; }
+
+    /// <summary>
+    ///     IOException (but not EndOfStreamException, a truncated file) or UnauthorizedAccessException, here or as an inner
+    ///     exception
+    /// </summary>
+    private static bool IsAccessError(Exception ex)
+    {
+        for (var e = ex; e != null; e = e.InnerException)
+        {
+            if (e is IOException and not EndOfStreamException or UnauthorizedAccessException)
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /// <summary>
     ///     Reads a SRUM database (and, optionally, user names and Wi-Fi profile names from a SOFTWARE hive). The database
     ///     is read from a copy in a temporary folder, with its SRU*.log files replayed (see <see cref="EseWorkspace" />),
     ///     so nothing next to <paramref name="fileName" /> changes. A table or row that can't be read is reported in
@@ -1295,6 +1319,8 @@ public class Srum
             }
             catch (Exception e)
             {
+                //a hive that can't be read at all (locked, access denied, IO errors) is told apart from a damaged one
+                SoftwareHiveNotAccessed = IsAccessError(e);
                 AddError($"SOFTWARE hive '{softwareHive}': {e.Message}. User and network profile names may be missing");
             }
 

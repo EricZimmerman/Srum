@@ -557,9 +557,16 @@ internal class Program
             Console.WriteLine();
         }
 
+        //a SOFTWARE hive that could not be read (locked, access denied) is a failure (1); a damaged one is only a warning (0)
+        if (sr.SoftwareHiveNotAccessed)
+        {
+            Log.Error("Unable to read SOFTWARE hive '{R}': user and network profile names are missing (see above)", r);
+            Console.WriteLine();
+        }
+
         Log.Information("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
 
-        return exportFailed || searchErrors > 0 ? 1 : 0;
+        return exportFailed || searchErrors > 0 || sr.SoftwareHiveNotAccessed ? 1 : 0;
     }
 
     /// <summary>The exit code when -d had no SRUDB.dat: 0, or 1 when part of the folder could not be searched</summary>

@@ -77,6 +77,37 @@ public class SrumTests
     }
 
     [Test]
+    public void DamagedSoftwareHiveIsAParseError()
+    {
+        SrumBuilder.Standard(Db);
+        var hive = Path.Combine(_dir, "SOFTWARE");
+        File.WriteAllBytes(hive, new byte[4096]);
+
+        var srum = new Srum(Db, hive);
+
+        srum.ParseErrors.Should().Contain(e => e.Contains("SOFTWARE hive"));
+        srum.SoftwareHiveNotAccessed.Should().BeFalse("the hive was read, it is only damaged");
+    }
+
+    [Test]
+    public void LockedSoftwareHiveIsNotAccessed()
+    {
+        SrumBuilder.Standard(Db);
+        var hive = Path.Combine(_dir, "SOFTWARE");
+        File.WriteAllBytes(hive, new byte[4096]);
+
+        Srum srum;
+        using (new FileStream(hive, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            srum = new Srum(Db, hive);
+        }
+
+        srum.ParseErrors.Should().Contain(e => e.Contains("SOFTWARE hive"));
+        srum.SoftwareHiveNotAccessed.Should().BeTrue();
+        srum.AppMaps.Should().HaveCount(4, "the database is still read");
+    }
+
+    [Test]
     public void ObjectsOfTheNewerProvidersAreNamed()
     {
         //IdType 4 was skipped

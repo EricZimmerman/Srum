@@ -155,6 +155,44 @@ public class CliTests
             output.Should().Contain("Error processing file!");
         }
     }
+
+    [Test]
+    public void SoftwareHiveThatCantBeReadFails()
+    {
+        //-r SOFTWARE that can't be read (locked) is a failure (1); the database is still exported
+        var db = Path.Combine(_dir, "SRU", "SRUDB.dat");
+        SrumBuilder.Standard(db);
+        var hive = Path.Combine(_dir, "SOFTWARE");
+        File.WriteAllBytes(hive, new byte[4096]);
+        var csv = Path.Combine(_dir, "out");
+
+        using (new FileStream(hive, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            var (code, output) = Run("-f", db, "-r", hive, "--csv", csv);
+
+            code.Should().Be(1, output);
+            output.Should().Contain("Unable to read SOFTWARE hive");
+        }
+
+        Csv(csv, "NetworkUsages").Skip(1).Should().HaveCount(3);
+    }
+
+    [Test]
+    public void DamagedSoftwareHiveIsAWarning()
+    {
+        //a SOFTWARE hive that was read but is damaged (not a hive) is reported, but it is not a failure
+        var db = Path.Combine(_dir, "SRU", "SRUDB.dat");
+        SrumBuilder.Standard(db);
+        var hive = Path.Combine(_dir, "SOFTWARE");
+        File.WriteAllBytes(hive, new byte[4096]);
+
+        var (code, output) = Run("-f", db, "-r", hive, "--csv", Path.Combine(_dir, "out"));
+
+        code.Should().Be(0, output);
+        output.Should().Contain("SOFTWARE hive");
+        output.Should().NotContain("Unable to read SOFTWARE hive");
+    }
+
     [Test]
     public void CopiesGoToTempNextToTheProgram()
     {
