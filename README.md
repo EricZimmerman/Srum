@@ -10,7 +10,7 @@ them by hand. Results are exported to CSV, one file per table.
 | **Version** | 2026.10.0 |
 | **Download** | [.NET 10](https://download.ericzimmermanstools.com/net/SrumECmd.zip) (recommended) &middot; [.NET Framework 4.7.2](https://download.ericzimmermanstools.com/SrumECmd.zip) |
 | **All tools** | [ericzimmerman.github.io](https://ericzimmerman.github.io) or [Get-ZimmermanTools](https://download.ericzimmermanstools.com/Get-ZimmermanTools.zip), which downloads them all and keeps them current |
-| **Changes** | [ChangeLog.txt](https://download.ericzimmermanstools.com/ChangeLog.txt) |
+| **Changes** | [ChangeLog](https://ericzimmerman.github.io/changelog/) |
 | **Issues** | [EricZimmerman/Srum](https://github.com/EricZimmerman/Srum/issues) or [EricZimmerman/Issues](https://github.com/EricZimmerman/Issues/issues) |
 
 ## Requirements
@@ -108,7 +108,7 @@ There is no need to repair anything by hand any more. `esentutl.exe /mh SRUDB.da
   SrumECmd by default, instead of the user's `%TEMP%`).
 - Exit code 1 when the tool fails (it was always 0). Error reports include source file and line numbers.
 
-The full list is in the [ChangeLog](https://download.ericzimmermanstools.com/ChangeLog.txt).
+The full list is in the [ChangeLog](https://ericzimmerman.github.io/changelog/).
 
 ## Building
 
