@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.CommandLine;
 using System.CommandLine.Help;
@@ -318,15 +318,16 @@ internal class Program
 
             ilter.RecursionFilter = entryInfo => !entryInfo.IsMountPoint && !entryInfo.IsSymbolicLink;
 
+            //(AlphaFS does not call ErrorFilter when ContinueOnException is set: the folder was skipped silently)
             ilter.ErrorFilter = (errorCode, errorMessage, pathProcessed) =>
             {
-                searchErrors += 1;
+                searchErrors += ReportUnreadable(pathProcessed, errorMessage);
                 return true;
             };
 
             const DirectoryEnumerationOptions dirEnumOptions =
                 DirectoryEnumerationOptions.Files | DirectoryEnumerationOptions.Recursive |
-                DirectoryEnumerationOptions.SkipReparsePoints | DirectoryEnumerationOptions.ContinueOnException |
+                DirectoryEnumerationOptions.SkipReparsePoints |
                 DirectoryEnumerationOptions.BasicSearch;
 
              files2 =
@@ -361,9 +362,10 @@ internal class Program
 
             ilter.RecursionFilter = entryInfo => !entryInfo.IsMountPoint && !entryInfo.IsSymbolicLink;
 
+            //(AlphaFS does not call ErrorFilter when ContinueOnException is set: the folder was skipped silently)
             ilter.ErrorFilter = (errorCode, errorMessage, pathProcessed) =>
             {
-                searchErrors += 1;
+                searchErrors += ReportUnreadable(pathProcessed, errorMessage);
                 return true;
             };
 
@@ -590,7 +592,13 @@ internal class Program
     {
         private readonly string _name;
 
-        public int Errors;
+        //the folder whose handle is opened right after ShouldRecurseIntoEntry returns true: when that fails, ContinueOnError
+        //is called before ShouldIncludeEntry for the same entry. Null: the folder being searched (the root, when the base
+        //constructor can't open it; field initializers run before the base constructor, so Unreadable is there)
+        private string _lastRecursed;
+
+        /// <summary>Folders that could not be read (null: the root folder) and why</summary>
+        public readonly List<(string Folder, string Reason)> Unreadable = new();
 
         public EntryFinder(string directory, string name) : base(directory,
             new EnumerationOptions { IgnoreInaccessible = false, RecurseSubdirectories = true, AttributesToSkip = 0 })
@@ -598,8 +606,15 @@ internal class Program
             _name = name;
         }
 
+        protected override bool ShouldRecurseIntoEntry(ref System.IO.Enumeration.FileSystemEntry entry)
+        {
+            _lastRecursed = entry.ToFullPath();
+            return true;
+        }
+
         protected override bool ShouldIncludeEntry(ref System.IO.Enumeration.FileSystemEntry entry)
         {
+            _lastRecursed = null;
             return System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(_name, entry.FileName, true);
         }
 
@@ -610,7 +625,8 @@ internal class Program
 
         protected override bool ContinueOnError(int error)
         {
-            Errors += 1;
+            Unreadable.Add((_lastRecursed, new System.ComponentModel.Win32Exception(error).Message));
+            _lastRecursed = null;
             return true;
         }
     }
@@ -625,10 +641,29 @@ internal class Program
             found.Add(finder.Current);
         }
 
-        errors += finder.Errors;
+        foreach (var (folder, reason) in finder.Unreadable)
+        {
+            errors += ReportUnreadable(folder ?? directory, reason);
+        }
+
         return found;
     }
 #endif
+
+    //-d is searched twice (SRUDB.dat, then SOFTWARE): each folder that can't be read is reported once
+    private static readonly HashSet<string> UnreadableFolders = new(StringComparer.OrdinalIgnoreCase);
+
+    /// <summary>Logs a folder that could not be read, the first time; 1 then, else 0</summary>
+    private static int ReportUnreadable(string folder, string reason)
+    {
+        if (UnreadableFolders.Add(folder) == false)
+        {
+            return 0;
+        }
+
+        Log.Error("Unable to read folder {Folder}: {Reason}", folder, reason?.Trim());
+        return 1;
+    }
 
     private static int Depth(Type type)
     {

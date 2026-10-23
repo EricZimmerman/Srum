@@ -157,6 +157,44 @@ public class CliTests
     }
 
     [Test]
+    public void UnreadableSubfolderFails()
+    {
+        if (!OperatingSystem.IsWindows())
+        {
+            Assert.Ignore("Folder ACLs are Windows only");
+            return;
+        }
+
+        //a folder under -d that can't be read is reported by name and gives 1; the database found is still exported
+        SrumBuilder.Standard(Path.Combine(_dir, "SRU", "SRUDB.dat"));
+        var denied = Directory.CreateDirectory(Path.Combine(_dir, "denied"));
+        var csv = Path.Combine(_dir, "out");
+
+        var rule = new System.Security.AccessControl.FileSystemAccessRule(System.Security.Principal.WindowsIdentity.GetCurrent().User!,
+            System.Security.AccessControl.FileSystemRights.ReadAndExecute,
+            System.Security.AccessControl.InheritanceFlags.ContainerInherit | System.Security.AccessControl.InheritanceFlags.ObjectInherit,
+            System.Security.AccessControl.PropagationFlags.None, System.Security.AccessControl.AccessControlType.Deny);
+        var security = denied.GetAccessControl();
+        security.AddAccessRule(rule);
+        denied.SetAccessControl(security);
+        try
+        {
+            var (code, output) = Run("-d", _dir, "--csv", csv);
+
+            code.Should().Be(1, output);
+            //once, though -d is searched for SRUDB.dat and then for SOFTWARE
+            output.Split($"Unable to read folder {denied.FullName}").Should().HaveCount(2, output);
+            Csv(csv, "NetworkUsages").Skip(1).Should().HaveCount(3);
+        }
+        finally
+        {
+            security = denied.GetAccessControl();
+            security.RemoveAccessRule(rule);
+            denied.SetAccessControl(security);
+        }
+    }
+
+    [Test]
     public void SoftwareHiveThatCantBeReadFails()
     {
         //-r SOFTWARE that can't be read (locked) is a failure (1); the database is still exported
