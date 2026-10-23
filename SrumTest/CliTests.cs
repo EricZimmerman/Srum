@@ -115,11 +115,45 @@ public class CliTests
     {
         Run().ExitCode.Should().Be(1, "-f or -d is required");
         Run("-f", Path.Combine(_dir, "missing.dat"), "--csv", Path.Combine(_dir, "out")).ExitCode.Should().Be(1);
-        Run("-d", _dir, "--csv", Path.Combine(_dir, "out")).ExitCode.Should().Be(1, "there is no SRUDB.dat");
+        Run("-d", _dir, "--csv", Path.Combine(_dir, "out")).ExitCode.Should().Be(0, "there is no SRUDB.dat: nothing to do");
 
         File.WriteAllBytes(Path.Combine(_dir, "SRU", "SRUDB.dat"), new byte[8192]);
         Run("-d", _dir).ExitCode.Should().Be(1, "--csv is required");
-        Run("-d", _dir, "--csv", Path.Combine(_dir, "out")).ExitCode.Should().Be(1, "the database can't be opened");
+
+        //a damaged database is reported, but it is not a failure of SrumECmd
+        var (code, output) = Run("-d", _dir, "--csv", Path.Combine(_dir, "out"));
+        code.Should().Be(0, output);
+        output.Should().Contain("Error processing file!");
+    }
+
+    [Test]
+    public void CsvThatCantBeWrittenFails()
+    {
+        SrumBuilder.Standard(Path.Combine(_dir, "SRU", "SRUDB.dat"));
+        //--csv names a file, so the folder can't be created
+        var file = Path.Combine(_dir, "a file");
+        File.WriteAllText(file, "x");
+
+        var (code, output) = Run("-d", _dir, "--csv", file);
+
+        code.Should().Be(1, output);
+        output.Should().Contain("Unable to create directory");
+    }
+
+    [Test]
+    public void LockedDatabaseFails()
+    {
+        //a database SrumECmd can't read is a failure (1), unlike a damaged one
+        var db = Path.Combine(_dir, "SRU", "SRUDB.dat");
+        SrumBuilder.Standard(db);
+
+        using (new FileStream(db, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            var (code, output) = Run("-f", db, "--csv", Path.Combine(_dir, "out"));
+
+            code.Should().Be(1, output);
+            output.Should().Contain("Error processing file!");
+        }
     }
     [Test]
     public void CopiesGoToTempNextToTheProgram()

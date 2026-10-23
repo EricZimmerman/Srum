@@ -228,28 +228,23 @@ internal class Program
 
         Srum sr = null;
 
+        //folders under -d that could not be searched (exit code 1)
+        var searchErrors = 0;
+
         if (d.IsNullOrEmpty() == false)
         {
             IEnumerable<string> files2;
 
 #if NET6_0_OR_GREATER
-            var enumerationOptions = new EnumerationOptions
-            {
-                IgnoreInaccessible = true,
-                MatchCasing = MatchCasing.CaseInsensitive,
-                RecurseSubdirectories = true,
-                AttributesToSkip = 0
-            };
-
-            files2 =
-                Directory.EnumerateFileSystemEntries(d, "SRUDB.DAT", enumerationOptions);
+            files2 = FindEntries(d, "SRUDB.DAT", ref searchErrors);
 
             f = files2.FirstOrDefault();
 
             if (f.IsNullOrEmpty())
             {
                 Log.Warning("Did not locate any files named 'SRUDB.dat'! Exiting");
-                return 1;
+                //nothing to do is not a failure, unless part of the folder could not be searched
+                return SearchResult(d, searchErrors);
             }
 
             string esentutlOutput = "";
@@ -290,8 +285,7 @@ internal class Program
                 Log.Error(ex, "An error occurred while running esentutl.exe");
             }
             
-            files2 =
-                Directory.EnumerateFileSystemEntries(d, "SOFTWARE", enumerationOptions);
+            files2 = FindEntries(d, "SOFTWARE", ref searchErrors);
 
             r = files2.FirstOrDefault();
 
@@ -324,7 +318,11 @@ internal class Program
 
             ilter.RecursionFilter = entryInfo => !entryInfo.IsMountPoint && !entryInfo.IsSymbolicLink;
 
-            ilter.ErrorFilter = (errorCode, errorMessage, pathProcessed) => true;
+            ilter.ErrorFilter = (errorCode, errorMessage, pathProcessed) =>
+            {
+                searchErrors += 1;
+                return true;
+            };
 
             const DirectoryEnumerationOptions dirEnumOptions =
                 DirectoryEnumerationOptions.Files | DirectoryEnumerationOptions.Recursive |
@@ -339,7 +337,8 @@ internal class Program
             if (f.IsNullOrEmpty())
             {
                 Log.Warning("Did not locate any files named 'SRUDB.dat'! Exiting");
-                return 1;
+                //nothing to do is not a failure, unless part of the folder could not be searched
+                return SearchResult(d, searchErrors);
             }
 
             Log.Information("Found SRUM database file '{F}'!", f);
@@ -362,7 +361,11 @@ internal class Program
 
             ilter.RecursionFilter = entryInfo => !entryInfo.IsMountPoint && !entryInfo.IsSymbolicLink;
 
-            ilter.ErrorFilter = (errorCode, errorMessage, pathProcessed) => true;
+            ilter.ErrorFilter = (errorCode, errorMessage, pathProcessed) =>
+            {
+                searchErrors += 1;
+                return true;
+            };
 
             files2 =
                 Directory.EnumerateFileSystemEntries(d, dirEnumOptions, ilter);
@@ -380,6 +383,10 @@ internal class Program
             }
 #endif
 
+            if (searchErrors > 0)
+            {
+                Log.Error("Could not access all files in '{D}': {Count:N0} folder(s) could not be read", d, searchErrors);
+            }
 
             Console.WriteLine();
         }
@@ -447,7 +454,8 @@ internal class Program
                 "Error processing file! Message: {Message}.\r\n\r\nThe transaction logs were replayed into a copy of the database and, if it was still dirty, the copy was repaired with 'esentutl.exe /p', so the database is probably damaged beyond repair. 'esentutl.exe /mh SRUDB.dat' shows its state",
                 e.Message);
             Console.WriteLine();
-            return 1;
+            //a database that could not be read (access denied, locked, IO errors) is a failure (1); a damaged one is not (0)
+            return e is IOException or UnauthorizedAccessException || searchErrors > 0 ? 1 : 0;
         }
 
         if (Directory.Exists(csv) == false)
@@ -551,8 +559,69 @@ internal class Program
 
         Log.Information("Processing completed in {TotalSeconds:N4} seconds\r\n", sw.Elapsed.TotalSeconds);
 
-        return exportFailed ? 1 : 0;
+        return exportFailed || searchErrors > 0 ? 1 : 0;
     }
+
+    /// <summary>The exit code when -d had no SRUDB.dat: 0, or 1 when part of the folder could not be searched</summary>
+    private static int SearchResult(string d, int searchErrors)
+    {
+        if (searchErrors == 0)
+        {
+            return 0;
+        }
+
+        Log.Error("Could not access all files in '{D}': {Count:N0} folder(s) could not be read", d, searchErrors);
+        return 1;
+    }
+
+#if NET6_0_OR_GREATER
+    /// <summary>
+    ///     Files under a folder, recursively, with this name (case-insensitive). Folders that can't be read are skipped and
+    ///     counted (IgnoreInaccessible skipped them silently)
+    /// </summary>
+    private sealed class EntryFinder : System.IO.Enumeration.FileSystemEnumerator<string>
+    {
+        private readonly string _name;
+
+        public int Errors;
+
+        public EntryFinder(string directory, string name) : base(directory,
+            new EnumerationOptions { IgnoreInaccessible = false, RecurseSubdirectories = true, AttributesToSkip = 0 })
+        {
+            _name = name;
+        }
+
+        protected override bool ShouldIncludeEntry(ref System.IO.Enumeration.FileSystemEntry entry)
+        {
+            return System.IO.Enumeration.FileSystemName.MatchesSimpleExpression(_name, entry.FileName, true);
+        }
+
+        protected override string TransformEntry(ref System.IO.Enumeration.FileSystemEntry entry)
+        {
+            return entry.ToFullPath();
+        }
+
+        protected override bool ContinueOnError(int error)
+        {
+            Errors += 1;
+            return true;
+        }
+    }
+
+    /// <summary>The first match is enough, as before (the search stops there)</summary>
+    private static IEnumerable<string> FindEntries(string directory, string name, ref int errors)
+    {
+        using var finder = new EntryFinder(directory, name);
+        var found = new List<string>();
+        if (finder.MoveNext())
+        {
+            found.Add(finder.Current);
+        }
+
+        errors += finder.Errors;
+        return found;
+    }
+#endif
 
     private static int Depth(Type type)
     {
