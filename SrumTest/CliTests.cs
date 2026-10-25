@@ -102,16 +102,16 @@ public class CliTests
     [Test]
     public void ConsoleLog()
     {
-        //Issues #259: --co saves the console messages to <yyyyMMddHHmmss>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory
+        //Issues #259: --co (on by default) saves the console messages to <yyyyMMddHHmmss>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory
         SrumBuilder.Standard(Path.Combine(_dir, "SRU", "SRUDB.dat"));
         var csv = Path.Combine(_dir, "out");
 
-        var (code, output) = Run("-d", _dir, "--csv", csv);
+        var (code, output) = Run("-d", _dir, "--csv", csv, "--co", "false");
         code.Should().Be(0, output);
-        Directory.GetFiles(csv, "*_ConsoleLog.txt").Should().BeEmpty("--co is off by default");
+        Directory.GetFiles(csv, "*_ConsoleLog.txt").Should().BeEmpty("--co false turns it off");
         output.Should().NotContain("Console log:");
 
-        (code, output) = Run("-d", _dir, "--csv", csv, "--co");
+        (code, output) = Run("-d", _dir, "--csv", csv);
         code.Should().Be(0, output);
         var log = Directory.GetFiles(csv, "*_ConsoleLog.txt").Should().ContainSingle().Subject;
         Path.GetFileName(log).Should().MatchRegex(@"^\d{14}_SrumECmd_\d+\.\d+\.\d+_ConsoleLog\.txt$");

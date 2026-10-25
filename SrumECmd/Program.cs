@@ -120,8 +120,8 @@ internal class Program
         };
         var coOpt = new Option<bool>("--co")
         {
-            Description = "Save all console messages to <timestamp>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory",
-            DefaultValueFactory = _ => false
+            Description = "When true, save all console messages to <timestamp>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory. Use --co false to turn it off",
+            DefaultValueFactory = _ => true
         };
 
         _rootCommand = new RootCommand

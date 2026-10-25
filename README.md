@@ -35,7 +35,7 @@ Options:
   --temp <temp>   Folder for the temporary copy of the SRUM database and its transaction logs, which is opened instead of the evidence and deleted when done. Default: a Temp folder next to SrumECmd. A folder that isn't there is created, and removed again when done. If that folder can't be written to, SrumECmd stops: give a writable folder with --temp
   --debug         Show debug information during processing
   --trace         Show trace information during processing
-  --co            Save all console messages to <timestamp>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory
+  --co            When true, save all console messages to <timestamp>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory. Use --co false to turn it off
   -?, -h, --help  Show help and usage information
   --version       Show version information
 ```
@@ -108,7 +108,7 @@ There is no need to repair anything by hand any more. `esentutl.exe /mh SRUDB.da
 - `--dt` also applies to the `Timestamp` columns. New `--temp` for the temporary copy (a `Temp` folder next to
   SrumECmd by default, instead of the user's `%TEMP%`).
 - Exit code 1 when the tool fails (it was always 0). Error reports include source file and line numbers.
-- `--co` saves all console messages to `<yyyyMMddHHmmss>_SrumECmd_<version>_ConsoleLog.txt` in the `--csv` directory, with the same time (UTC) as the CSV names (Issues #259) (2026.10.1).
+- `--co` (on by default; `--co false` turns it off) saves all console messages to `<yyyyMMddHHmmss>_SrumECmd_<version>_ConsoleLog.txt` in the `--csv` directory, with the same time (UTC) as the CSV names (Issues #259) (2026.10.1).
 
 The full list is in the [ChangeLog](https://ericzimmerman.github.io/changelog/).
 
