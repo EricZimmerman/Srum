@@ -100,6 +100,29 @@ public class CliTests
     }
 
     [Test]
+    public void ConsoleLog()
+    {
+        //Issues #259: --co saves the console messages to <yyyyMMddHHmmss>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory
+        SrumBuilder.Standard(Path.Combine(_dir, "SRU", "SRUDB.dat"));
+        var csv = Path.Combine(_dir, "out");
+
+        var (code, output) = Run("-d", _dir, "--csv", csv);
+        code.Should().Be(0, output);
+        Directory.GetFiles(csv, "*_ConsoleLog.txt").Should().BeEmpty("--co is off by default");
+        output.Should().NotContain("Console log:");
+
+        (code, output) = Run("-d", _dir, "--csv", csv, "--co");
+        code.Should().Be(0, output);
+        var log = Directory.GetFiles(csv, "*_ConsoleLog.txt").Should().ContainSingle().Subject;
+        Path.GetFileName(log).Should().MatchRegex(@"^\d{14}_SrumECmd_\d+\.\d+\.\d+_ConsoleLog\.txt$");
+        output.Should().Contain("Console log: " + log);
+        var text = File.ReadAllText(log);
+        text.Should().MatchRegex(@"\[\d\d:\d\d:\d\d\.\d{3} INF\] SrumECmd version ");
+        text.Should().Contain("Command line: -d ");
+        Directory.GetFiles(csv, Path.GetFileName(log)[..14] + "_SrumECmd_NetworkUsages_Output.csv").Should().HaveCount(1, "the CSVs and the log have the same time");
+    }
+
+    [Test]
     public void DtAppliesToTimestamp()
     {
         SrumBuilder.Standard(Path.Combine(_dir, "SRU", "SRUDB.dat"));

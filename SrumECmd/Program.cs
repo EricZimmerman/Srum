@@ -118,6 +118,11 @@ internal class Program
             Description = "Show trace information during processing",
             DefaultValueFactory = _ => false
         };
+        var coOpt = new Option<bool>("--co")
+        {
+            Description = "Save all console messages to <timestamp>_SrumECmd_<version>_ConsoleLog.txt in the --csv directory",
+            DefaultValueFactory = _ => false
+        };
 
         _rootCommand = new RootCommand
         {
@@ -128,13 +133,14 @@ internal class Program
            dtOpt,
            tempOpt,
            debugOpt,
-           traceOpt
+           traceOpt,
+           coOpt
         
         };
 
         _rootCommand.Description = Header + "\r\n\r\n" + Footer;
         
-        _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(rOpt),result.GetValue(dOpt),result.GetValue(csvOpt),result.GetValue(dtOpt),result.GetValue(tempOpt),result.GetValue(debugOpt),result.GetValue(traceOpt)));
+        _rootCommand.SetAction(result => DoWork(result.GetValue(fOpt),result.GetValue(rOpt),result.GetValue(dOpt),result.GetValue(csvOpt),result.GetValue(dtOpt),result.GetValue(tempOpt),result.GetValue(debugOpt),result.GetValue(traceOpt),result.GetValue(coOpt)));
 
         var exitCode = await _rootCommand.Parse(args).InvokeAsync();
 
@@ -144,7 +150,7 @@ internal class Program
     }
 
     /// <returns>0 on success; 1 for invalid arguments, a database that could not be read or an export that failed</returns>
-    private static int DoWork(string f, string r, string d, string csv, string dt, string temp, bool debug, bool trace)
+    private static int DoWork(string f, string r, string d, string csv, string dt, string temp, bool debug, bool trace, bool co)
     {
         var levelSwitch = new LoggingLevelSwitch();
 
@@ -165,6 +171,15 @@ internal class Program
         var conf = new LoggerConfiguration()
             .WriteTo.Console(outputTemplate: template)
             .MinimumLevel.ControlledBy(levelSwitch);
+
+        //the time in the output names, and in the console log's
+        var ts = DateTimeOffset.UtcNow;
+
+        var consoleLog = co ? ConsoleLog.GetPath(ts, csv) : null;
+        if (consoleLog != null)
+        {
+            conf.WriteTo.File(consoleLog, outputTemplate: ConsoleLog.Template);
+        }
 
         Log.Logger = conf.CreateLogger();
 
@@ -216,6 +231,11 @@ internal class Program
         Console.WriteLine();
         Log.Information("Command line: {Args}\r\n", string.Join(" ", _args));
 
+        if (consoleLog != null)
+        {
+            Log.Information("Console log: {Path}\r\n", consoleLog);
+        }
+
         if (IsAdministrator() == false)
         {
             Log.Warning("Warning: Administrator privileges not found!\r\n");
@@ -223,8 +243,6 @@ internal class Program
 
         var sw = new Stopwatch();
         sw.Start();
-
-        var ts = DateTimeOffset.UtcNow;
 
         Srum sr = null;
 

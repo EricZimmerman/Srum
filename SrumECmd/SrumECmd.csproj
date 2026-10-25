@@ -5,7 +5,7 @@
         <TargetFrameworks>net472;net10.0</TargetFrameworks>
         <LangVersion>10</LangVersion>
         <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
-        <Version>2026.10.0</Version>
+        <Version>2026.10.1</Version>
         <Authors>Eric R. Zimmerman</Authors>
         <Description>Dumps SRUM data to CSV</Description>
         <Copyright>Eric R. Zimmerman 2027</Copyright>
@@ -25,6 +25,7 @@
         </PackageReference>
         <PackageReference Include="Serilog" Version="4.4.0" />
         <PackageReference Include="Serilog.Sinks.Console" Version="6.1.1" />
+        <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
         <PackageReference Include="ServiceStack.Text" Version="10.4.0" />
         <PackageReference Include="System.CommandLine" Version="2.0.13" />
     </ItemGroup>
