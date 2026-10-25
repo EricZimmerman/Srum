@@ -296,7 +296,7 @@ public class CliTests
         var file = Path.Combine(_dir, "a file");
         File.WriteAllText(file, "x");
 
-        var (code, output) = Run("-d", _dir, "--csv", Path.Combine(_dir, "out"), "--temp", Path.Combine(file, "temp"));
+        var (code, output) = Run("-d", _dir, "--csv", Path.Combine(_dir, "out"), "--temp", Path.Combine(file, "temp"), "--co", "false");
 
         code.Should().Be(1, output);
         output.Should().Contain("Give one with --temp");
