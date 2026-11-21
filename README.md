@@ -7,7 +7,7 @@ them by hand. Results are exported to CSV, one file per table.
 
 | | |
 |---|---|
-| **Version** | 2026.10.1 |
+| **Version** | 2026.11.0 |
 | **Download** | [.NET 10](https://download.ericzimmermanstools.com/net/SrumECmd.zip) (recommended) &middot; [.NET Framework 4.7.2](https://download.ericzimmermanstools.com/SrumECmd.zip) |
 | **All tools** | [ericzimmerman.github.io](https://ericzimmerman.github.io) or [Get-ZimmermanTools](https://download.ericzimmermanstools.com/Get-ZimmermanTools.zip), which downloads them all and keeps them current |
 | **Changes** | [ChangeLog](https://ericzimmerman.github.io/changelog/) |
@@ -91,6 +91,10 @@ There is no need to repair anything by hand any more. `esentutl.exe /mh SRUDB.da
 |---|---|
 | `0` | Success. A damaged database or SOFTWARE hive is reported but is not a failure, and neither is a `-d` folder without `SRUDB.dat` |
 | `1` | The tool failed: invalid arguments, a missing input path, a database or `-r` SOFTWARE hive it can't read (access denied, locked, IO errors), a `--temp` folder that can't be written to, or an export that failed. Folders under `-d` that can't be read are reported (`Unable to read folder <path>: <reason>`) and the rest is still processed |
+
+## What's new in 2026.11
+
+- Moved to CsvHelper 34, a rewrite of the CSV library; the CSV output is byte for byte the same as 2026.10's.
 
 ## What's new in 2026.10
 
