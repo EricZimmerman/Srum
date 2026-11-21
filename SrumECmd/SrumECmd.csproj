@@ -5,7 +5,7 @@
         <TargetFrameworks>net472;net10.0</TargetFrameworks>
         <LangVersion>10</LangVersion>
         <ApplicationIcon>ReportWithChart.ico</ApplicationIcon>
-        <Version>2026.10.1</Version>
+        <Version>2026.11.0</Version>
         <Authors>Eric R. Zimmerman</Authors>
         <Description>Dumps SRUM data to CSV</Description>
         <Copyright>Eric R. Zimmerman 2027</Copyright>
