@@ -497,67 +497,7 @@ internal class Program
 
         Log.Information("CSV output will be saved to '{Csv}'\r\n", csv);
 
-        var exportFailed = false;
-
-        //(Timestamp ignored --dt: it was always yyyy-MM-dd HH:mm:ss, the --dt default)
-        exportFailed |= !ExportCsv(sr.EnergyUsages.Values, csv, ts, "EnergyUsage", EnergyUsage.TableName, map =>
-        {
-            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
-            map.Map(t => t.EventTimestamp).Convert(t => $"{t.Value.EventTimestamp?.ToString(dt)}");
-        });
-
-        exportFailed |= !ExportCsv(sr.TimelineProviders.Values, csv, ts, "AppTimelineProvider", TimelineProvider.TableName, map =>
-        {
-            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
-            map.Map(t => t.EndTime).Convert(t => t.Value.EndTime.ToString(dt));
-        });
-
-        exportFailed |= !ExportCsv(sr.Vfuprovs.Values, csv, ts, "vfuprov", Vfuprov.TableName, map =>
-        {
-            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
-            map.Map(t => t.EndTime).Convert(t => t.Value.EndTime.ToString(dt));
-            map.Map(t => t.StartTime).Convert(t => t.Value.StartTime.ToString(dt));
-        });
-
-        exportFailed |= !ExportCsv(sr.AppResourceUseInfos.Values, csv, ts, "AppResourceUseInfo", AppResourceUseInfo.TableName,
-            map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
-
-        exportFailed |= !ExportCsv(sr.NetworkConnections.Values, csv, ts, "NetworkConnections", NetworkConnection.TableName, map =>
-        {
-            map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt));
-            map.Map(t => t.ConnectStartTime).Convert(t => t.Value.ConnectStartTime.ToString(dt));
-        });
-
-        exportFailed |= !ExportCsv(sr.NetworkUsages.Values, csv, ts, "NetworkUsages", NetworkUsage.TableName,
-            map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
-
-        exportFailed |= !ExportCsv(sr.PushNotifications.Values, csv, ts, "PushNotifications", PushNotification.TableName,
-            map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
-
-        //the providers seen on Server 2022 (Issue #15): only when there are rows, as most systems don't have them
-        if (sr.ProcessorTimes.Count > 0)
-        {
-            exportFailed |= !ExportCsv(sr.ProcessorTimes.Values, csv, ts, "ProcessorTime", ProcessorTimeInfo.TableName,
-                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
-        }
-
-        if (sr.SizeInBytesInfos.Count > 0)
-        {
-            exportFailed |= !ExportCsv(sr.SizeInBytesInfos.Values, csv, ts, "SizeInBytes", SizeInBytesInfo.TableName,
-                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
-        }
-
-        if (sr.TotalUsedInfos.Count > 0)
-        {
-            exportFailed |= !ExportCsv(sr.TotalUsedInfos.Values, csv, ts, "TotalUsed", TotalUsedInfo.TableName,
-                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
-        }
-
-        if (sr.NetworkBytesInfos.Count > 0)
-        {
-            exportFailed |= !ExportCsv(sr.NetworkBytesInfos.Values, csv, ts, "NetworkBytes", NetworkBytesInfo.TableName,
-                map => map.Map(t => t.Timestamp).Convert(t => t.Value.Timestamp.ToString(dt)));
-        }
+        var exportFailed = ExportCsvs(sr, csv, ts, dt);
 
         sw.Stop();
 
@@ -683,22 +623,57 @@ internal class Program
         return 1;
     }
 
-    private static int Depth(Type type)
+    /// <summary>
+    ///     The CSVs, with the time stamps of each table in the --dt format (Timestamp ignored --dt: it was always
+    ///     yyyy-MM-dd HH:mm:ss, the --dt default). Returns whether a CSV could not be written
+    /// </summary>
+    private static bool ExportCsvs(Srum sr, string csv, DateTimeOffset ts, string dt)
     {
-        var depth = 0;
-        for (var t = type; t?.BaseType != null; t = t.BaseType)
+        var exportFailed = false;
+
+        exportFailed |= !ExportCsv(sr.EnergyUsages.Values, csv, ts, "EnergyUsage", EnergyUsage.TableName, SrumCsv.EnergyUsage(dt));
+
+        exportFailed |= !ExportCsv(sr.TimelineProviders.Values, csv, ts, "AppTimelineProvider", TimelineProvider.TableName, SrumCsv.TimelineProvider(dt));
+
+        exportFailed |= !ExportCsv(sr.Vfuprovs.Values, csv, ts, "vfuprov", Vfuprov.TableName, SrumCsv.Vfuprov(dt));
+
+        exportFailed |= !ExportCsv(sr.AppResourceUseInfos.Values, csv, ts, "AppResourceUseInfo", AppResourceUseInfo.TableName, SrumCsv.AppResourceUseInfo(dt));
+
+        exportFailed |= !ExportCsv(sr.NetworkConnections.Values, csv, ts, "NetworkConnections", NetworkConnection.TableName, SrumCsv.NetworkConnection(dt));
+
+        exportFailed |= !ExportCsv(sr.NetworkUsages.Values, csv, ts, "NetworkUsages", NetworkUsage.TableName, SrumCsv.NetworkUsage(dt));
+
+        exportFailed |= !ExportCsv(sr.PushNotifications.Values, csv, ts, "PushNotifications", PushNotification.TableName, SrumCsv.PushNotification(dt));
+
+        //the providers seen on Server 2022 (Issue #15): only when there are rows, as most systems don't have them
+        if (sr.ProcessorTimes.Count > 0)
         {
-            depth += 1;
+            exportFailed |= !ExportCsv(sr.ProcessorTimes.Values, csv, ts, "ProcessorTime", ProcessorTimeInfo.TableName, SrumCsv.ProcessorTimeInfo(dt));
         }
 
-        return depth;
+        if (sr.SizeInBytesInfos.Count > 0)
+        {
+            exportFailed |= !ExportCsv(sr.SizeInBytesInfos.Values, csv, ts, "SizeInBytes", SizeInBytesInfo.TableName, SrumCsv.SizeInBytesInfo(dt));
+        }
+
+        if (sr.TotalUsedInfos.Count > 0)
+        {
+            exportFailed |= !ExportCsv(sr.TotalUsedInfos.Values, csv, ts, "TotalUsed", TotalUsedInfo.TableName, SrumCsv.TotalUsedInfo(dt));
+        }
+
+        if (sr.NetworkBytesInfos.Count > 0)
+        {
+            exportFailed |= !ExportCsv(sr.NetworkBytesInfos.Values, csv, ts, "NetworkBytes", NetworkBytesInfo.TableName, SrumCsv.NetworkBytesInfo(dt));
+        }
+
+        return exportFailed;
     }
 
     /// <summary>
     ///     One CSV (written even when it has no rows, as before)
     /// </summary>
     private static bool ExportCsv<T>(IEnumerable<T> records, string csv, DateTimeOffset ts, string name, string tableName,
-        Action<CsvHelper.Configuration.ClassMap<T>> configure)
+        CsvRecordWriter<T> recordWriter)
     {
         try
         {
@@ -706,29 +681,10 @@ internal class Program
 
             var outFile = Path.Combine(csv, $"{ts:yyyyMMddHHmmss}_SrumECmd_{name}_Output.csv");
 
-            //(the writers were never closed)
-            using var swCsv = new StreamWriter(outFile, false, Encoding.UTF8);
-            using var csvWriter = new CsvWriter(swCsv, CultureInfo.InvariantCulture);
+            //the same output as CsvHelper 33, UTF-8 with a BOM; the columns are in SrumCsv
+            using var csvWriter = CsvWriter.ToFile(outFile, CsvOutput.Options with { WriteByteOrderMark = true });
 
-            var map = csvWriter.Context.AutoMap<T>();
-            configure(map);
-
-            //SrumRecord's columns (Id, Timestamp, ExeInfo, ...) first, as in the other CSVs, then the table's own
-            if (map.MemberMaps.Select(m => m.Data.Member?.DeclaringType).Distinct().Count() > 1)
-            {
-                var ordered = map.MemberMaps.OrderBy(m => Depth(m.Data.Member?.DeclaringType)).ToList();
-                for (var i = 0; i < ordered.Count; i++)
-                {
-                    ordered[i].Data.Index = i;
-                    ordered[i].Data.IsIndexSet = true;
-                }
-            }
-
-            csvWriter.Context.RegisterClassMap(map);
-            csvWriter.WriteHeader<T>();
-            csvWriter.NextRecord();
-
-            csvWriter.WriteRecords(records);
+            csvWriter.WriteRecords(records, recordWriter);
 
             return true;
         }
